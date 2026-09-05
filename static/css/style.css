@@ -5,12 +5,12 @@
 }
 
 :root {
-    --ink: #1c1917;
-    --paper: #faf6f0;
-    --accent: #d95d39;
-    --accent-dark: #a8442a;
-    --line: #e3d9c9;
-    --text-muted: #6b6459;
+    --ink: #291f14;
+    --paper: #fff9f9;
+    --accent: #D0637C;
+    --accent-dark: #D0637C;
+    --line: #D0637C;
+    --text-muted: #51002b;
     --radius: 4px;
 }
 
@@ -58,6 +58,11 @@ h1, .brand {
     color: var(--ink);
     text-decoration: none;
     font-size: 0.95rem;
+    
+}
+
+.site-header nav a:hover {
+    color: var(--accent);
 }
 
 .hero {
@@ -134,11 +139,12 @@ h1, .brand {
     background-color: var(--ink);
     border-radius: var(--radius);
     padding: 0.5rem 1.1rem;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .social-link:hover {
     background-color: var(--accent);
+    transform: translateY(-3px);
 }
 
 .hero-photo {
@@ -192,4 +198,75 @@ h1, .brand {
     .social-links {
         justify-content: flex-start;
     }
+
+}
+
+/* Experience Section */
+.experience {
+    padding: 100px 0;
+    border-top: 1px solid var(--line);
+    
+}
+
+.experience h2{
+    font-size: 48px;
+    margin-bottom: 50px;
+    
+}
+
+.experience-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.experience-item {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 40px;
+    padding: 35px 0;
+    border-top: 1px solid var(--line);
+    
+}
+
+.experience-year {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.experience-content h3 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.experience-role {
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.experience-content p:last-child {
+    max-width: 700px;
+    line-height: 1.7;
+    color: var(--text-muted);
+}
+
+
+
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .experience{
+        padding: 70px 0;
+    }
+
+    .experience h2{
+        font-size: 36px;
+    }
+
+    .experience-item {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    
 }
