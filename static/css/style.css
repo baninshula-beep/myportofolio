@@ -9,7 +9,7 @@
     --paper: #fff9f9;
     --accent: #D0637C;
     --accent-dark: #D0637C;
-    --line: #D0637C;
+    --line: #e99cae;
     --text-muted: #51002b;
     --radius: 4px;
 }
@@ -173,6 +173,11 @@ h1, .brand {
     object-fit: cover;
     border-radius: var(--radius);
     border: 3px solid var(--ink);
+    transition: transform 0.25s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.04) rotate(-1deg);
 }
 
 .site-footer {
