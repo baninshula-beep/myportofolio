@@ -34,3 +34,11 @@ class Experience(models.Model):
     @property
     def is_ongoing(self):
         return self.ended_at is None
+
+class Education(models.Model):
+    institution = models.CharField(max_length=100)
+    degree = models.CharField(max_length=100)
+    year = models.CharField(max_length=20)
+
+    def __str__(self):
+        return self.institution    
