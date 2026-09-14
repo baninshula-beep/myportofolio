@@ -215,68 +215,70 @@ h1, .brand {
 .experience {
     padding: 100px 0;
     border-top: 1px solid var(--line);
-    
 }
 
-.experience h2{
+.experience h1 {
     font-size: 48px;
-    margin-bottom: 50px;
-    
+    margin-bottom: 45px;
 }
 
-.experience-list {
+.experience-grid {
     display: flex;
     flex-direction: column;
 }
 
-.experience-item {
-    display: grid;
-    grid-template-columns: 180px 1fr;
-    gap: 40px;
-    padding: 35px 0;
+.experience-card {
+    padding: 40px 0;
     border-top: 1px solid var(--line);
-    
 }
 
-.experience-year {
+.experience-date {
     font-size: 16px;
     font-weight: 700;
+    margin: 0 0 20px 0;
 }
 
-.experience-content h3 {
+.experience-card h2 {
     font-size: 28px;
-    margin-bottom: 8px;
+    margin: 0 0 18px 0;
 }
 
-.experience-role {
-    font-weight: 700;
-    margin-bottom: 15px;
-}
-
-.experience-content p:last-child {
-    max-width: 700px;
-    line-height: 1.7;
+.experience-description {
+    max-width: 750px;
     color: var(--text-muted);
 }
 
+.experience-description p {
+    margin: 0;
+    line-height: 1.7;
+}
 
+.experience-description p:first-child {
+    color: var(--text);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
 
-
+.experience-description p + p {
+    margin-top: 0;
+}
 
 /* Responsive */
 @media (max-width: 768px) {
-    .experience{
+    .experience {
         padding: 70px 0;
     }
 
-    .experience h2{
+    .experience h1 {
         font-size: 36px;
+        margin-bottom: 35px;
     }
 
-    .experience-item {
-        grid-template-columns: 1fr;
-        gap: 12px;
+    .experience-card {
+        padding: 30px 0;
     }
 
-    
+    .experience-card h2 {
+        font-size: 24px;
+    }
 }

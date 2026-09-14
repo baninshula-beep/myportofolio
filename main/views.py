@@ -25,6 +25,7 @@ def show_experience(request):
     return render(request, "experience.html", context)
 
 def show_education(request):
+    # Mengambil seluruh data pendidikan dari database untuk ditampilkan di halaman Education.
     context = {
         "name": "Banin Shula Afiqah Aradena",
         "education_list": Education.objects.all(),
