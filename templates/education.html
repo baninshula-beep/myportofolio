@@ -1,72 +1,162 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "base.html" %}
 
+{% block meta %}
     <title>Education - {{ name }}</title>
+{% endblock meta %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+{% block content %}
 
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-
-<body>
-
-    <header class="site-header">
+<main>
+    <section class="experience-section" id="education">
         <div class="container">
-            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
 
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_education' %}">Education</a>
-            </nav>
-        </div>
-    </header>
+            <div class="education-header">
+                <div>
+                    <p class="section-kicker">Pendidikan saya</p>
+                    <h1>Education</h1>
+                </div>
 
-    <main>
-        <section class="experience-section" id="education">
-            <div class="container">
-                <p class="section-kicker"></p>
-                <h1>Education</h1>
+                <a href="{% url 'main:create_education' %}" class="button">
+                    + Tambah Pendidikan
+                </a>
+            </div>
 
-                <div class="experience-grid">
-                    <!-- Menampilkan seluruh data pendidikan yang dikirim oleh view. -->
-                    {% for education in education_list %}
-                        <article class="experience-card">
+            <form method="get"
+                  action="{% url 'main:show_education' %}"
+                  class="education-search">
 
-                            <h2>{{ education.institution }}</h2>
+                <input
+                    type="search"
+                    name="institution"
+                    value="{{ institution_query }}"
+                    placeholder="Cari berdasarkan institusi"
+                    class="education-search__input"
+                    aria-label="Cari berdasarkan institusi"
+                >
 
-                            <p class="experience-description">
-                                {{ education.degree }}
-                            </p>
+                <button type="submit" class="button">
+                    Cari
+                </button>
+            </form>
 
-                            <p class="experience-status">
-                                {{ education.year }}
-                            </p>
+            <div class="experience-grid">
 
-                        </article>
+                {% for education in education_list %}
 
-                    <!-- Menampilkan pesan ketika belum ada data pendidikan di database. -->
-                    {% empty %}
+                    <article class="experience-card">
+
+                        <p class="experience-date">
+                            {{ education.year }}
+                        </p>
+
+                        <h2>
+                            {{ education.institution }}
+                        </h2>
+
+                        <p class="experience-role">
+                            {{ education.degree }}
+                        </p>
+
+                        <div class="project-actions">
+
+                            <button
+                                type="button"
+                                class="button button-danger"
+                                popovertarget="delete-education-{{ education.id }}"
+                            >
+                                Hapus Pendidikan
+                            </button>
+
+                            <div
+                                id="delete-education-{{ education.id }}"
+                                class="education-delete-modal"
+                                popover="auto"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="delete-education-title-{{ education.id }}"
+                            >
+
+                                <button
+                                    type="button"
+                                    class="education-delete-modal__backdrop"
+                                    popovertarget="delete-education-{{ education.id }}"
+                                    popovertargetaction="hide"
+                                    aria-label="Tutup konfirmasi hapus"
+                                ></button>
+
+                                <div class="education-delete-modal__content">
+
+                                    <button
+                                        type="button"
+                                        class="education-delete-modal__close"
+                                        popovertarget="delete-education-{{ education.id }}"
+                                        popovertargetaction="hide"
+                                        aria-label="Tutup konfirmasi hapus"
+                                    >
+                                        ×
+                                    </button>
+
+                                    <h2 id="delete-education-title-{{ education.id }}">
+                                        Hapus Pendidikan?
+                                    </h2>
+
+                                    <p>
+                                        Apakah kamu yakin ingin menghapus
+                                        <strong>{{ education.institution }}</strong>?
+                                    </p>
+
+                                    <div class="education-delete-modal__actions">
+
+                                        <button
+                                            type="button"
+                                            class="button button-secondary"
+                                            popovertarget="delete-education-{{ education.id }}"
+                                            popovertargetaction="hide"
+                                        >
+                                            Batal
+                                        </button>
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'main:delete_education' education.id %}"
+                                        >
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="button button-danger"
+                                            >
+                                                Ya, Hapus
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </article>
+
+                {% empty %}
+
+                    {% if institution_query %}
+                        <p class="empty-state">
+                            Tidak ada pendidikan dengan institusi tersebut.
+                        </p>
+                    {% else %}
                         <p class="empty-state">
                             Belum ada data pendidikan yang ditambahkan.
                         </p>
-                    {% endfor %}
-                </div>
+                    {% endif %}
+
+                {% endfor %}
+
             </div>
-        </section>
-    </main>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
         </div>
-    </footer>
+    </section>
+</main>
 
-</body>
-</html>
-
+{% endblock content %}
