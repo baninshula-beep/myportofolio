@@ -35,7 +35,12 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "banin-shula-myportofolio.pws.cs.ui.ac.id"
 ]
+
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://banin-shula-myportofolio.pws.cs.ui.ac.id",
+]
 
 # Application definition
 
