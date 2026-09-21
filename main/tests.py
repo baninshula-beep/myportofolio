@@ -88,3 +88,116 @@ class MainTest(TestCase):
             response,
             "Belum ada data pendidikan yang ditambahkan."
         )
+
+    def test_education_with_graduation_year(self):
+        education = Education.objects.create(
+            institution="Universitas Indonesia",
+            degree="S1 Sistem Informasi",
+            year="2024 - Present",
+            graduation_year=2028,
+        )
+
+        response = self.client.get(
+            reverse("main:show_education")
+        )
+
+        self.assertContains(
+            response,
+            str(education.graduation_year)
+        )
+
+    def test_create_education(self):
+        response = self.client.post(
+            reverse("main:create_education"),
+            {
+                "institution": "Universitas Indonesia",
+                "degree": "S1 Sistem Informasi",
+                "year": "2024 - Present",
+                "graduation_year": 2028,
+            }
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            Education.objects.filter(
+                institution="Universitas Indonesia"
+            ).exists()
+        )
+
+    def test_update_education(self):
+        education = Education.objects.create(
+            institution="Universitas Indonesia",
+            degree="S1 Sistem Informasi",
+            year="2024 - Present",
+            graduation_year=2028,
+        )
+
+        response = self.client.post(
+            reverse(
+                "main:update_education",
+                args=[education.id]
+            ),
+            {
+                "institution": "Universitas Indonesia",
+                "degree": "S1 Ilmu Komputer",
+                "year": "2024 - Present",
+                "graduation_year": 2028,
+            }
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        education.refresh_from_db()
+
+        self.assertEqual(
+            education.degree,
+            "S1 Ilmu Komputer"
+        )
+
+    def test_delete_education(self):
+        education = Education.objects.create(
+            institution="Universitas Indonesia",
+            degree="S1 Sistem Informasi",
+            year="2024 - Present",
+            graduation_year=2028,
+        )
+
+        response = self.client.post(
+            reverse(
+                "main:delete_education",
+                args=[education.id]
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            Education.objects.filter(
+                id=education.id
+            ).exists()
+        )
+
+    def test_education_json(self):
+        education = Education.objects.create(
+            institution="Universitas Indonesia",
+            degree="S1 Sistem Informasi",
+            year="2024 - Present",
+            graduation_year=2028,
+        )
+
+        response = self.client.get(
+            reverse("main:get_education_json")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/json"
+        )
+        self.assertContains(
+            response,
+            education.institution
+        )
+        self.assertContains(
+            response,
+            str(education.graduation_year)
+        )

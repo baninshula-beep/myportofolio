@@ -12,11 +12,17 @@
 
             <p class="section-kicker">Pendidikan saya</p>
 
-            <h1>Tambah Pendidikan</h1>
+            <h1>
+                {% if education %}
+                    Edit Pendidikan
+                {% else %}
+                    Tambah Pendidikan
+                {% endif %}
+            </h1>
 
             <form
                 method="post"
-                action="{% url 'main:create_education' %}"
+                action="{% if education %}{% url 'main:update_education' education.id %}{% else %}{% url 'main:create_education' %}{% endif %}"
                 class="education-form"
             >
 
@@ -43,7 +49,11 @@
                 {% endfor %}
 
                 <button type="submit" class="button">
-                    Tambah Pendidikan
+                    {% if education %}
+                        Simpan Perubahan
+                    {% else %}
+                        Tambah Pendidikan
+                    {% endif %}
                 </button>
 
                 <a

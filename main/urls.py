@@ -5,6 +5,7 @@ from main.views import (
     show_experience,
     show_education,
     create_education,
+    update_education,
     get_education_json,
     delete_education,
 )
@@ -34,6 +35,7 @@ urlpatterns = [
         name="create_education"
     ),
 
+    # Endpoint untuk mengambil data Education dalam format JSON.
     path(
         "api/education/",
         get_education_json,
@@ -44,5 +46,11 @@ urlpatterns = [
         "education/<int:education_id>/delete/",
         delete_education,
         name="delete_education"
+    ),
+
+    path(
+    "education/<int:education_id>/edit/",
+    update_education,
+    name="update_education"
     ),
 ]

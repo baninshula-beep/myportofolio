@@ -39,6 +39,25 @@ def show_education(request):
         education_list = education_list.filter(
             institution__icontains=institution_query
         )
+    # Serialisasi data Education menjadi JSON sebelum ditampilkan.
+    education_json = serializers.serialize(
+        "json",
+        education_list
+    )
+
+    # Data JSON dideserialisasi kembali menjadi object Education
+    # agar dapat digunakan oleh template untuk menampilkan data.
+    education_list = list(
+        serializers.deserialize(
+            "json",
+            education_json
+        )
+    )
+
+    education_list = [
+        item.object
+        for item in education_list
+    ]
 
     context = {
         "name": "Banin Shula Afiqah Aradena",
@@ -67,6 +86,43 @@ def create_education(request):
 
     return render(request, "education_form.html", context)
 
+def update_education(request, education_id):
+
+    # Mengambil data Education berdasarkan ID dan mengembalikan 404
+    # jika data yang diminta tidak ditemukan.
+    education = get_object_or_404(
+        Education,
+        pk=education_id
+    )
+
+    # Instance yang ditemukan digunakan agar form mengedit data lama,
+    # bukan membuat data Education baru.
+    form = EducationForm(
+        request.POST or None,
+        instance=education
+    )
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+
+        messages.success(
+            request,
+            "Data pendidikan berhasil diperbarui!"
+        )
+
+        return redirect("main:show_education")
+
+    context = {
+        "name": "Banin Shula Afiqah Aradena",
+        "form": form,
+        "education": education,
+    }
+
+    return render(
+        request,
+        "education_form.html",
+        context
+    )
 
 def get_education_json(request):
     institution_query = request.GET.get("institution", "").strip()
@@ -78,6 +134,8 @@ def get_education_json(request):
             institution__icontains=institution_query
         )
 
+    # Mengubah queryset Education menjadi JSON agar data dapat
+    # diakses melalui endpoint API.
     education_json = serializers.serialize(
         "json",
         education_list
@@ -90,6 +148,8 @@ def get_education_json(request):
 
 
 def delete_education(request, education_id):
+
+    # Mengambil data yang akan dihapus berdasarkan ID.
     education = get_object_or_404(
         Education,
         pk=education_id

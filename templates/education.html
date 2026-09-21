@@ -56,8 +56,20 @@
                         <p class="experience-role">
                             {{ education.degree }}
                         </p>
-
+                        
+                        {% if education.graduation_year %}
+                            <p class="experience-date">
+                                Lulus {{ education.graduation_year }}
+                            </p>
+                        {% endif %}
                         <div class="project-actions">
+
+                            <a
+                                href="{% url 'main:update_education' education.id %}"
+                                class="button"
+                            >
+                                Edit
+                            </a>
 
                             <button
                                 type="button"
