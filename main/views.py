@@ -13,8 +13,8 @@ def show_main(request):
         "npm": "2506604794",
         "study_program": "S1 Sistem Informasi",
         "bio": (
-            "Mahasiswa Sistem Informasi Universitas Indonesia yang tertarik "
-            "pada teknologi, data, dan pengembangan produk."
+            "I'm interested in technology, business, and data. "
+            
         ),
     }
 

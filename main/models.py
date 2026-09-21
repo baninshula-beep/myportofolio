@@ -24,7 +24,11 @@ class Experience(models.Model):
         choices=EXPERIENCE_CHOICES,
         default='full-time'
     )
-    thumbnail = models.URLField(blank=True, null=True)
+    thumbnail = models.ImageField(
+        upload_to="experience/",
+        blank=True,
+        null=True
+    )
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
 
