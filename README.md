@@ -35,3 +35,31 @@ Pada Tugas 2, saya menggunakan ChatGPT sebagai bantuan dalam memahami dan mengim
 Dalam menggunakan AI, saya menyadari bahwa jawaban yang diberikan tidak selalu dapat langsung diterapkan pada project saya. Salah satu keterbatasannya adalah AI tidak selalu mengetahui kondisi terbaru dari project, seperti struktur file, kode yang sudah ada, atau data yang tersimpan di database. Karena itu, saya tetap memeriksa kode yang diberikan dengan membandingkannya dengan struktur project saya dan menjalankannya secara langsung untuk memastikan kode tersebut bekerja. Contohnya, ketika terdapat data `Education` yang muncul lebih dari satu kali, saya memeriksa data pada database dan tidak langsung menganggap bahwa masalah tersebut berasal dari template.
 
 Strategi prompting yang saya gunakan adalah memberikan konteks project dan kode yang sedang saya kerjakan terlebih dahulu, kemudian menanyakan satu permasalahan atau konsep secara spesifik. Saya juga memberikan pesan error atau hasil terminal ketika membutuhkan bantuan debugging. Setelah mendapatkan saran dari AI, saya menjalankan dan menguji kembali perubahan tersebut secara mandiri. Dengan cara ini, AI saya gunakan sebagai alat bantu belajar dan debugging, bukan sebagai pengganti proses pemahaman dan pengujian kode.
+
+### Tugas 3
+
+1. ModelForm memungkinkan form dibuat berdasarkan model Django sehingga field dan validasi dapat disesuaikan dengan model yang digunakan. Pada implementasi ini, `EducationForm` dibuat menggunakan `ModelForm` dengan model `Education`, sehingga field seperti `institution`, `degree`, `year`, dan `graduation_year` dapat digunakan langsung pada form. ModelForm juga membantu mengurangi penulisan kode HTML secara manual dan mempermudah proses menyimpan atau memperbarui data ke database.
+
+   Jika form dibuat menggunakan HTML secara manual, setiap input harus dibuat dan diproses secara terpisah di dalam view. Dengan ModelForm, proses pengambilan input, validasi, dan penyimpanan data dapat lebih terintegrasi dengan model.
+
+   `csrf_token` diperlukan untuk melindungi form dari serangan Cross-Site Request Forgery (CSRF). Token tersebut digunakan Django untuk memastikan bahwa request POST yang dikirim melalui form berasal dari halaman yang sah dari aplikasi. Pada implementasi form Education, `{% csrf_token %}` ditambahkan di dalam form sehingga request untuk menambah dan memperbarui data dapat diproses oleh Django dengan aman.
+
+2. JSON dan XML sama-sama dapat digunakan untuk menyimpan atau bertukar data dalam format terstruktur. JSON menggunakan pasangan key-value dan struktur yang lebih ringkas, sedangkan XML menggunakan tag untuk merepresentasikan data.
+
+   Pada implementasi ini, JSON digunakan untuk menyediakan data `Education` melalui endpoint `/api/education/`. Django melakukan serialisasi queryset `Education` menjadi JSON sehingga data dapat dikirim dalam format yang terstruktur. JSON dipilih karena formatnya lebih ringkas dan mudah digunakan untuk pertukaran data pada aplikasi web.
+
+3. Alur pengambilan data JSON dimulai ketika pengguna mengakses endpoint `/api/education/`. Request tersebut diarahkan oleh `main/urls.py` ke view `get_education_json`. View kemudian mengambil data `Education` dari database dan melakukan filtering berdasarkan parameter `institution` jika parameter tersebut diberikan.
+
+   Data yang masih berupa queryset Django kemudian diserialisasi menggunakan `serializers.serialize("json", education_list)`. Hasil serialisasi tersebut dikembalikan menggunakan `HttpResponse` dengan `content_type="application/json"`.
+
+   Serialisasi diperlukan karena object atau queryset Django tidak dapat langsung dikirim sebagai data JSON. Melalui proses serialisasi, data dari object Django diubah menjadi format JSON yang dapat dikirim dan diproses oleh client.
+
+   Pada halaman Education, data juga diambil melalui proses serialisasi dan kemudian dideserialisasi kembali menjadi object Django sebelum dikirim ke template. Proses tersebut dilakukan untuk memenuhi alur pengambilan data melalui JSON sekaligus tetap memungkinkan template menggunakan object `Education` untuk menampilkan data.
+
+### AI Disclosure Tugas 3
+
+Pada Tugas 3, saya menggunakan ChatGPT sebagai bantuan dalam memahami dan mengimplementasikan `ModelForm`, fitur CRUD, endpoint JSON, serta proses serialisasi dan deserialisasi pada Django. Saya juga menggunakannya untuk membantu mengecek kode dan testing.
+
+Saya menyadari bahwa AI tidak selalu mengetahui kondisi terbaru dari project saya, seperti struktur file dan perubahan kode yang sudah dilakukan. Karena itu, saya tetap memeriksa saran AI dengan membandingkannya dengan kode project dan menjalankan testing untuk memastikan hasilnya sesuai.
+
+Strategi prompting yang saya gunakan adalah memberikan konteks project, potongan kode, serta error atau hasil yang saya temukan. Setelah mendapatkan saran, saya menerapkannya secara bertahap dan menguji kembali hasilnya. Dengan demikian, AI saya gunakan sebagai alat bantu memahami konsep dan debugging, bukan sebagai pengganti proses pemahaman dan pengujian kode.
