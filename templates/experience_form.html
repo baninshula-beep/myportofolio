@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block meta %}
+    <title>
+        {% if experience %}
+            Edit Experience
+        {% else %}
+            Tambah Experience
+        {% endif %}
+        - {{ name }}
+    </title>
+{% endblock meta %}
+
+{% block content %}
+
+<main>
+    <section class="experience-section">
+        <div class="container">
+
+            <div class="experience-header">
+                <p class="section-kicker">Pengalaman saya</p>
+
+                <h1>
+                    {% if experience %}
+                        Edit Experience
+                    {% else %}
+                        Tambah Experience
+                    {% endif %}
+                </h1>
+            </div>
+
+            <form
+                method="post"
+                enctype="multipart/form-data"
+            >
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <div class="project-actions">
+
+                    <button
+                        type="submit"
+                        class="button"
+                    >
+                        {% if experience %}
+                            Simpan Perubahan
+                        {% else %}
+                            Tambah Experience
+                        {% endif %}
+                    </button>
+
+                    <a
+                        href="{% url 'main:show_experience' %}"
+                        class="button button-secondary"
+                    >
+                        Batal
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </section>
+</main>
+
+{% endblock content %}

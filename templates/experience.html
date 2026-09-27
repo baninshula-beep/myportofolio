@@ -11,12 +11,25 @@
         <div class="container">
 
             <div class="experience-header">
-                <p class="section-kicker">Pengalaman saya</p>
-                <h1>Experience</h1>
-                <p class="experience-intro">
-                    A collection of experiences, projects, and organizations
-                    I have been involved in.
-                </p>
+
+                <div>
+                    <p class="section-kicker">Pengalaman saya</p>
+
+                    <h1>Experience</h1>
+
+                    <p class="experience-intro">
+                        A collection of experiences, projects, and organizations
+                        I have been involved in.
+                    </p>
+                </div>
+
+                <a
+                    href="{% url 'main:create_experience' %}"
+                    class="button"
+                >
+                    + Tambah Experience
+                </a>
+
             </div>
 
             <div class="experience-grid">
@@ -57,6 +70,114 @@
                             <p class="experience-description">
                                 {{ experience.description }}
                             </p>
+
+                            <div class="project-actions">
+
+                                <a
+                                    href="{% url 'main:update_experience' experience.id %}"
+                                    class="button"
+                                >
+                                    Edit
+                                </a>
+
+                                <button
+                                    type="button"
+                                    class="button button-danger"
+                                    popovertarget="delete-experience-{{ experience.id }}"
+                                >
+                                    Hapus
+                                </button>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'main:toggle_star' experience.id %}"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="button"
+                                    >
+                                        {% if user in experience.starred_by.all %}
+                                            ★ Unstar
+                                        {% else %}
+                                            ☆ Star
+                                        {% endif %}
+
+                                        ({{ experience.starred_by.count }})
+                                    </button>
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                        <div
+                            id="delete-experience-{{ experience.id }}"
+                            class="education-delete-modal"
+                            popover="auto"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="delete-experience-title-{{ experience.id }}"
+                        >
+
+                            <button
+                                type="button"
+                                class="education-delete-modal__backdrop"
+                                popovertarget="delete-experience-{{ experience.id }}"
+                                popovertargetaction="hide"
+                                aria-label="Tutup konfirmasi hapus"
+                            ></button>
+
+                            <div class="education-delete-modal__content">
+
+                                <button
+                                    type="button"
+                                    class="education-delete-modal__close"
+                                    popovertarget="delete-experience-{{ experience.id }}"
+                                    popovertargetaction="hide"
+                                    aria-label="Tutup konfirmasi hapus"
+                                >
+                                    ×
+                                </button>
+
+                                <h2 id="delete-experience-title-{{ experience.id }}">
+                                    Hapus Experience?
+                                </h2>
+
+                                <p>
+                                    Apakah kamu yakin ingin menghapus
+                                    <strong>{{ experience.title }}</strong>?
+                                </p>
+
+                                <div class="education-delete-modal__actions">
+
+                                    <button
+                                        type="button"
+                                        class="button button-secondary"
+                                        popovertarget="delete-experience-{{ experience.id }}"
+                                        popovertargetaction="hide"
+                                    >
+                                        Batal
+                                    </button>
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'main:delete_experience' experience.id %}"
+                                    >
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="button button-danger"
+                                        >
+                                            Ya, Hapus
+                                        </button>
+                                    </form>
+
+                                </div>
+
+                            </div>
 
                         </div>
 

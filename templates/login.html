@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Login</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">
+            Login
+        </button>
+    </form>
+
+    <p>
+        Belum punya akun?
+        <a href="{% url 'main:register' %}">Register</a>
+    </p>
+</div>
+
+{% endblock content %}

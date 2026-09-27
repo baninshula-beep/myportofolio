@@ -1,122 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends 'base.html' %}
 
-    <title>{{ name }} - Portofolio</title>
+{% block content %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<main>
+    <section class="hero" id="profile">
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
+        <div class="container hero-grid">
 
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
-</head>
+            <div class="hero-identity">
 
-<body>
+                <p class="hero-kicker">
+                    Information System &middot; Universitas Indonesia
+                </p>
 
-    <header class="site-header">
-        <div class="container">
+                <h1 class="profile-name">{{ name }}</h1>
 
-            <a href="{% url 'main:show_main' %}" class="brand">
-                AFIQAH
-            </a>
+            </div>
 
-            <nav>
-                <a href="{% url 'main:show_main' %}">Profile</a>
-                <a href="{% url 'main:show_experience' %}">Experience</a>
-                <a href="{% url 'main:show_education' %}">Education</a>
-            </nav>
+            <div class="hero-photo">
 
-        </div>
-    </header>
+                <div class="photo-block"></div>
 
-    <main>
-        <section class="hero" id="profile">
+                <img
+                    class="avatar"
+                    src="/static/img/fotow.png"
+                    alt="Photo of Afiqah"
+                >
 
-            <div class="container hero-grid">
+            </div>
 
-                <div class="hero-identity">
+            <div class="hero-details">
 
-                    <p class="hero-kicker">
-                        Information System &middot; Universitas Indonesia
-                    </p>
+                <p class="bio">
+                    {{ bio }}
+                </p>
 
-                    <h1 class="profile-name">{{ name }}</h1>
+                <dl class="meta-list">
 
-                </div>
-
-                <div class="hero-photo">
-
-                    <div class="photo-block"></div>
-
-                    <img
-                        class="avatar"
-                        src="/static/img/fotow.png"
-                        alt="Photo of Afiqah"
-                    >
-
-                </div>
-
-                <div class="hero-details">
-
-                    <p class="bio">
-                        {{ bio }}
-                    </p>
-
-                    <dl class="meta-list">
-
-                        <div class="meta-row">
-                            <dt>NPM</dt>
-                            <dd>{{ npm }}</dd>
-                        </div>
-
-                        <div class="meta-row">
-                            <dt>Program</dt>
-                            <dd>{{ study_program }}</dd>
-                        </div>
-
-                    </dl>
-
-                    <div class="social-links">
-
-                        <a href="https://github.com/baninshula-beep" class="social-link">
-                            GitHub
-                        </a>
-
-                        <a href="https://www.linkedin.com/in/afiqah-aradena" class="social-link">
-                            LinkedIn
-                        </a>
-
-                        <a href="https://www.instagram.com/afiqaharadena/" class="social-link">
-                            Instagram
-                        </a>
-
-                        <a href="mailto:aradenaafiqah@gmail.com" class="social-link">
-                            Email
-                        </a>
-
+                    <div class="meta-row">
+                        <dt>NPM</dt>
+                        <dd>{{ npm }}</dd>
                     </div>
+
+                    <div class="meta-row">
+                        <dt>Program</dt>
+                        <dd>{{ study_program }}</dd>
+                    </div>
+
+                    <div class="meta-row">
+                        <dt>Last Login</dt>
+                        <dd>{{ last_login }}</dd>
+                    </div>
+
+                </dl>
+
+                <div class="social-links">
+
+                    <a href="https://github.com/baninshula-beep" class="social-link">
+                        GitHub
+                    </a>
+
+                    <a href="https://www.linkedin.com/in/afiqah-aradena" class="social-link">
+                        LinkedIn
+                    </a>
+
+                    <a href="https://www.instagram.com/afiqaharadena/" class="social-link">
+                        Instagram
+                    </a>
+
+                    <a href="mailto:aradenaafiqah@gmail.com" class="social-link">
+                        Email
+                    </a>
 
                 </div>
 
             </div>
 
-        </section>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>
-                &copy; 2026 {{ name }}.
-                Fakultas Ilmu Komputer, Universitas Indonesia.
-            </p>
         </div>
-    </footer>
 
-</body>
-</html>
+    </section>
+</main>
+
+{% endblock content %}
