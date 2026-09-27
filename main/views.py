@@ -3,6 +3,7 @@ from django.core import serializers
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout
+from django.core.exceptions import PermissionDenied
 import datetime
 from django.contrib.auth.decorators import login_required
 
@@ -82,6 +83,9 @@ def show_experience(request):
 
 @login_required
 def create_experience(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     form = ExperienceForm(
         request.POST or None,
         request.FILES or None
@@ -111,6 +115,9 @@ def create_experience(request):
 
 @login_required
 def update_experience(request, experience_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     experience = get_object_or_404(
         Experience,
         pk=experience_id
@@ -147,6 +154,9 @@ def update_experience(request, experience_id):
 
 @login_required
 def delete_experience(request, experience_id):
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
     experience = get_object_or_404(
         Experience,
         pk=experience_id
@@ -164,23 +174,6 @@ def delete_experience(request, experience_id):
 
     return redirect("main:show_experience")
 
-
-@login_required(login_url="/login/")
-def toggle_star(request, experience_id):
-    experience = get_object_or_404(
-        Experience,
-        pk=experience_id
-    )
-
-    if request.method == "POST":
-        if request.user in experience.starred_by.all():
-            experience.starred_by.remove(request.user)
-        else:
-            experience.starred_by.add(request.user)
-
-    return redirect("main:show_experience")
-
-
 def show_education(request):
     institution_query = request.GET.get("institution", "").strip()
 
@@ -190,6 +183,7 @@ def show_education(request):
         education_list = education_list.filter(
             institution__icontains=institution_query
         )
+
     # Serialisasi data Education menjadi JSON sebelum ditampilkan.
     education_json = serializers.serialize(
         "json",
@@ -318,3 +312,15 @@ def delete_education(request, education_id):
         return redirect("main:show_education")
 
     return redirect("main:show_education")
+
+@login_required(login_url="/login/")
+def toggle_star(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
+
+    if request.method == "POST":
+        if request.user in experience.starred_by.all():
+            experience.starred_by.remove(request.user)
+        else:
+            experience.starred_by.add(request.user)
+
+    return redirect("main:show_experience")

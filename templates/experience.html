@@ -23,12 +23,14 @@
                     </p>
                 </div>
 
-                <a
-                    href="{% url 'main:create_experience' %}"
-                    class="button"
-                >
-                    + Tambah Experience
-                </a>
+                {% if user.is_superuser %}
+                    <a
+                        href="{% url 'main:create_experience' %}"
+                        class="button"
+                    >
+                        + Tambah Experience
+                    </a>
+                {% endif %}
 
             </div>
 
@@ -73,20 +75,24 @@
 
                             <div class="project-actions">
 
-                                <a
-                                    href="{% url 'main:update_experience' experience.id %}"
-                                    class="button"
-                                >
-                                    Edit
-                                </a>
+                                {% if user.is_superuser %}
 
-                                <button
-                                    type="button"
-                                    class="button button-danger"
-                                    popovertarget="delete-experience-{{ experience.id }}"
-                                >
-                                    Hapus
-                                </button>
+                                    <a
+                                        href="{% url 'main:update_experience' experience.id %}"
+                                        class="button"
+                                    >
+                                        Edit
+                                    </a>
+
+                                    <button
+                                        type="button"
+                                        class="button button-danger"
+                                        popovertarget="delete-experience-{{ experience.id }}"
+                                    >
+                                        Hapus
+                                    </button>
+
+                                {% endif %}
 
                                 <form
                                     method="post"
@@ -94,10 +100,7 @@
                                 >
                                     {% csrf_token %}
 
-                                    <button
-                                        type="submit"
-                                        class="button"
-                                    >
+                                    <button type="submit" class="button">
                                         {% if user in experience.starred_by.all %}
                                             ★ Unstar
                                         {% else %}
@@ -111,7 +114,8 @@
                             </div>
 
                         </div>
-
+                        
+                    {% if user.is_superuser %}
                         <div
                             id="delete-experience-{{ experience.id }}"
                             class="education-delete-modal"
@@ -180,6 +184,7 @@
                             </div>
 
                         </div>
+                    {% endif %}    
 
                     </article>
 
