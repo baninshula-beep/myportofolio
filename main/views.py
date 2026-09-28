@@ -74,9 +74,15 @@ def show_main(request):
 
 
 def show_experience(request):
+    is_editor = (
+        request.user.is_authenticated
+        and request.user.groups.filter(name="Editor").exists()
+    )
+
     context = {
         "name": "Banin Shula Afiqah Aradena",
         "experience_list": Experience.objects.all(),
+        "is_editor": is_editor,
     }
 
     return render(request, "experience.html", context)
@@ -115,7 +121,9 @@ def create_experience(request):
 
 @login_required
 def update_experience(request, experience_id):
-    if not request.user.is_superuser:
+    is_editor = request.user.groups.filter(name="Editor").exists()
+
+    if not request.user.is_superuser and not is_editor:
         raise PermissionDenied
 
     experience = get_object_or_404(
