@@ -74,6 +74,8 @@ def show_main(request):
 
 
 def show_experience(request):
+    # Editor access is controlled through Django's "Editor" group.
+    # This flag is passed to the template to show authorized actions.
     is_editor = (
         request.user.is_authenticated
         and request.user.groups.filter(name="Editor").exists()
@@ -89,6 +91,8 @@ def show_experience(request):
 
 @login_required
 def create_experience(request):
+    # Creating experiences remains restricted to superusers.
+    # Editors are intentionally limited to updating existing experiences.
     if not request.user.is_superuser:
         raise PermissionDenied
 
@@ -121,6 +125,8 @@ def create_experience(request):
 
 @login_required
 def update_experience(request, experience_id):
+    # Editors and superusers are allowed to update existing experiences.
+    # Other authenticated users are blocked by a server-side permission check.
     is_editor = request.user.groups.filter(name="Editor").exists()
 
     if not request.user.is_superuser and not is_editor:
@@ -162,6 +168,8 @@ def update_experience(request, experience_id):
 
 @login_required
 def delete_experience(request, experience_id):
+    # Deleting experiences remains restricted to superusers.
+    # Editor users do not have permission to perform this action.
     if not request.user.is_superuser:
         raise PermissionDenied
 

@@ -63,3 +63,12 @@ Pada Tugas 3, saya menggunakan ChatGPT sebagai bantuan dalam memahami dan mengim
 Saya menyadari bahwa AI tidak selalu mengetahui kondisi terbaru dari project saya, seperti struktur file dan perubahan kode yang sudah dilakukan. Karena itu, saya tetap memeriksa saran AI dengan membandingkannya dengan kode project dan menjalankan testing untuk memastikan hasilnya sesuai.
 
 Strategi prompting yang saya gunakan adalah memberikan konteks project, potongan kode, serta error atau hasil yang saya temukan. Setelah mendapatkan saran, saya menerapkannya secara bertahap dan menguji kembali hasilnya. Dengan demikian, AI saya gunakan sebagai alat bantu memahami konsep dan debugging, bukan sebagai pengganti proses pemahaman dan pengujian kode.
+
+
+### AI Disclosure Tugas 4
+
+Pada Tugas 4, saya menggunakan ChatGPT sebagai bantuan dalam memahami dan mengimplementasikan fitur autentikasi dan otorisasi pada Django, khususnya penerapan role Editor menggunakan Django Group, pembatasan akses berdasarkan role, serta fitur star pada data Experience. Saya juga menggunakannya untuk membantu mengecek kode, memahami error, dan melakukan testing terhadap fitur yang telah diimplementasikan.
+
+Saya menyadari bahwa AI tidak selalu mengetahui kondisi terbaru dari project saya, seperti struktur file, perubahan kode, dan hasil implementasi yang sudah dilakukan. Karena itu, saya tetap memeriksa saran AI dengan membandingkannya dengan kode project, requirement tugas, serta menjalankan testing untuk memastikan hasilnya sesuai.
+
+Strategi prompting yang saya gunakan adalah memberikan konteks project, potongan kode, requirement tugas, serta error atau hasil testing yang saya temukan. Setelah mendapatkan saran, saya menerapkannya secara bertahap dan menguji kembali hasilnya, termasuk melakukan pengecekan terhadap hak akses Guest, Normal User, Editor, dan Superuser. Dengan demikian, AI saya gunakan sebagai alat bantu memahami konsep, debugging, dan code review, bukan sebagai pengganti proses pemahaman dan pengujian kode.
