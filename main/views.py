@@ -6,6 +6,7 @@ from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
 import datetime
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 
 from main.forms import EducationForm, ExperienceForm
 from main.models import Experience, Education
@@ -85,10 +86,14 @@ def show_experience(request):
         "name": "Banin Shula Afiqah Aradena",
         "is_editor": is_editor,
         "title_query": title_query,
+        "create_form": ExperienceForm(),
     }
 
-    return render(request, "experience.html", context)
-
+    return render(
+        request,
+        "experience.html",
+        context
+    )
 def get_experience_json(request):
     title_query = request.GET.get("title", "").strip()
 
@@ -176,6 +181,48 @@ def create_experience(request):
         request,
         "experience_form.html",
         context
+    )
+
+@require_POST
+def create_experience_ajax(request):
+    """
+    Menambahkan Experience melalui AJAX.
+
+    Endpoint ini hanya menerima POST dan hanya dapat digunakan
+    oleh superuser.
+    """
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {
+                "message": (
+                    "Hanya pemilik portofolio yang "
+                    "dapat menambahkan experience."
+                )
+            },
+            status=403,
+        )
+
+    form = ExperienceForm(
+        request.POST,
+        request.FILES
+    )
+
+    if form.is_valid():
+        experience = form.save()
+
+        return JsonResponse(
+            {
+                "message": "Experience berhasil ditambahkan.",
+                "pk": str(experience.id),
+            },
+            status=201,
+        )
+
+    return JsonResponse(
+        {
+            "errors": form.errors.get_json_data()
+        },
+        status=400,
     )
 
 

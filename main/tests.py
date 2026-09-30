@@ -13,6 +13,11 @@ class MainTest(TestCase):
             password="testpassword123",
         )
 
+        self.superuser = User.objects.create_superuser(
+            username="superuser",
+            password="superpassword123",
+        )
+
         self.experience = Experience.objects.create(
             title="Asisten Dosen PBP",
             description="Membantu mahasiswa memahami pengembangan web.",
@@ -138,6 +143,89 @@ class MainTest(TestCase):
         self.assertEqual(
             data[0]["fields"]["title"],
             "COMPFEST 18",
+        )
+
+    def test_create_experience_ajax_success(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {
+                "title": "COMPFEST 18",
+                "description": "Marketing and Business Development",
+                "category": "part-time",
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        data = response.json()
+
+        self.assertIn("pk", data)
+        self.assertEqual(
+            data["message"],
+            "Experience berhasil ditambahkan.",
+        )
+
+        self.assertTrue(
+            Experience.objects.filter(
+                title="COMPFEST 18"
+            ).exists()
+        )
+
+
+    def test_create_experience_ajax_forbidden(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {
+                "title": "Unauthorized Experience",
+                "description": "Should not be created",
+                "category": "part-time",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        data = response.json()
+
+        self.assertEqual(
+            data["message"],
+            "Hanya pemilik portofolio yang dapat menambahkan experience.",
+        )
+
+        self.assertFalse(
+            Experience.objects.filter(
+                title="Unauthorized Experience"
+            ).exists()
+        )
+
+
+    def test_create_experience_ajax_invalid(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.post(
+            reverse("main:create_experience_ajax"),
+            {
+                "title": "",
+                "description": "Invalid experience",
+                "category": "part-time",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        data = response.json()
+
+        self.assertIn(
+            "errors",
+            data,
+        )
+
+        self.assertIn(
+            "title",
+            data["errors"],
         )
 
     def test_empty_experience_page(self):

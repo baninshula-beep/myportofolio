@@ -16,6 +16,7 @@ from main.views import (
     register,
     login_user,
     logout_user,
+    create_experience_ajax,
 )
 
 
@@ -41,6 +42,12 @@ urlpatterns = [
         "experience/add/",
         create_experience,
         name="create_experience"
+    ),
+
+    path(
+        "experience/add-ajax/",
+        create_experience_ajax,
+        name="create_experience_ajax",
     ),
 
     path(
@@ -116,8 +123,10 @@ urlpatterns = [
         name="logout"
     ),
 
-    
 
 
-    
+
+
+
+
 ]

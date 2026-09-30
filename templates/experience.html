@@ -14,7 +14,9 @@
             <div class="experience-header">
 
                 <div>
-                    <p class="section-kicker">Pengalaman saya</p>
+                    <p class="section-kicker">
+                        Pengalaman saya
+                    </p>
 
                     <h1>Experience</h1>
 
@@ -25,12 +27,13 @@
                 </div>
 
                 {% if user.is_superuser %}
-                    <a
-                        href="{% url 'main:create_experience' %}"
+                    <button
+                        type="button"
                         class="button"
+                        popovertarget="add-experience-modal"
                     >
                         + Tambah Experience
-                    </a>
+                    </button>
                 {% endif %}
 
             </div>
@@ -57,76 +60,43 @@
                 </button>
             </form>
 
-            <!--
-                CSRF token disediakan oleh Django template
-                agar dapat digunakan oleh JavaScript untuk
-                form POST yang dibuat secara dinamis.
-            -->
             <form id="csrf-form" class="hide">
                 {% csrf_token %}
             </form>
 
-            <!--
-                State loading ditampilkan saat JavaScript
-                sedang mengambil data Experience.
-            -->
-            <div
-                id="loading"
-                class="empty-state hide"
-            >
+            <div id="loading" class="empty-state hide">
                 <p>Memuat experience...</p>
             </div>
 
-            <!--
-                State error ditampilkan jika request AJAX gagal.
-            -->
-            <div
-                id="error"
-                class="empty-state hide"
-            >
+            <div id="error" class="empty-state hide">
                 <p>
                     Gagal memuat data experience.
                     Silakan coba lagi.
                 </p>
             </div>
 
-            <!--
-                State empty ditampilkan jika endpoint
-                mengembalikan array Experience kosong.
-            -->
-            <div
-                id="empty"
-                class="empty-state hide"
-            >
+            <div id="empty" class="empty-state hide">
                 <p>
                     Belum ada pengalaman yang ditambahkan
                     atau ditemukan.
                 </p>
             </div>
 
-            <!--
-                JavaScript akan membuat seluruh Experience card
-                secara dinamis di dalam container ini.
-            -->
-            <div
-                id="grid"
-                class="experience-grid hide"
-            ></div>
+            <div id="grid" class="experience-grid hide"></div>
 
         </div>
     </section>
 </main>
 
-<!--
-    URL dan permission dari Django diberikan kepada
-    JavaScript melalui object konfigurasi.
-    
-    File experience.js tetap menjadi static JavaScript
-    sehingga tidak mengandung Django template tags.
--->
+{% if user.is_superuser %}
+    {% include "components/experience_form_modal.html" %}
+{% endif %}
+
 <script>
     window.experienceConfig = {
         endpoint: "{% url 'main:get_experience_json' %}",
+
+        createEndpoint: "{% url 'main:create_experience_ajax' %}",
 
         editUrl: "{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}",
 
