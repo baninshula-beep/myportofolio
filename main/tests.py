@@ -1,12 +1,18 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from main.models import Experience, Education
 
 
 class MainTest(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="testpassword123",
+        )
+
         self.experience = Experience.objects.create(
             title="Asisten Dosen PBP",
             description="Membantu mahasiswa memahami pengembangan web.",
@@ -19,7 +25,10 @@ class MainTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "index.html")
         self.assertNotContains(response, self.experience.title)
-        self.assertContains(response, f'href="{reverse("main:show_experience")}"')
+        self.assertContains(
+            response,
+            f'href="{reverse("main:show_experience")}"',
+        )
 
     def test_nonexistent_page_returns_404(self):
         response = self.client.get("/halaman-yang-tidak-ada/")
@@ -36,32 +45,143 @@ class MainTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "experience.html")
-        self.assertContains(response, self.experience.title)
-        self.assertContains(response, self.experience.description)
-        self.assertContains(response, "Part-Time")
-        self.assertContains(response, "Sedang berlangsung")
-        self.assertContains(response, f'href="{reverse("main:show_main")}"')
+
+        # Experience data is now loaded through the AJAX endpoint.
+        self.assertContains(response, 'id="loading"')
+        self.assertContains(response, 'id="error"')
+        self.assertContains(response, 'id="empty"')
+        self.assertContains(response, 'id="grid"')
+
+        # The page should no longer render experience data directly.
+        self.assertNotContains(response, self.experience.title)
+
+    def test_experience_json(self):
+        response = self.client.get(
+            reverse("main:get_experience_json")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/json",
+        )
+
+        data = response.json()
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(
+            data[0]["pk"],
+            str(self.experience.id),
+        )
+        self.assertEqual(
+            data[0]["fields"]["title"],
+            self.experience.title,
+        )
+        self.assertEqual(
+            data[0]["fields"]["description"],
+            self.experience.description,
+        )
+        self.assertEqual(
+            data[0]["fields"]["category"],
+            "Part-Time",
+        )
+        self.assertTrue(
+            data[0]["fields"]["is_ongoing"]
+        )
+        self.assertIsNone(
+            data[0]["fields"]["ended_at"]
+        )
+        self.assertEqual(
+            data[0]["fields"]["star_count"],
+            0,
+        )
+        self.assertFalse(
+            data[0]["fields"]["is_starred"]
+        )
+
+    def test_experience_json_with_completed_experience(self):
+        self.experience.ended_at = timezone.now()
+        self.experience.save()
+
+        response = self.client.get(
+            reverse("main:get_experience_json")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertFalse(
+            data[0]["fields"]["is_ongoing"]
+        )
+        self.assertIsNotNone(
+            data[0]["fields"]["ended_at"]
+        )
+
+    def test_experience_json_search(self):
+        Experience.objects.create(
+            title="COMPFEST 18",
+            description="Marketing and Business Development.",
+            category="part-time",
+        )
+
+        response = self.client.get(
+            reverse("main:get_experience_json"),
+            {"title": "COMPFEST"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(
+            data[0]["fields"]["title"],
+            "COMPFEST 18",
+        )
 
     def test_empty_experience_page(self):
         Experience.objects.all().delete()
-        response = self.client.get(reverse("main:show_experience"))
 
-        self.assertContains(
-            response,
-            "Belum ada pengalaman yang ditambahkan."
+        response = self.client.get(
+            reverse("main:show_experience")
         )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Empty state is now handled by JavaScript
+        # after receiving an empty AJAX response.
+        self.assertContains(response, 'id="empty"')
+
+    def test_empty_experience_json(self):
+        Experience.objects.all().delete()
+
+        response = self.client.get(
+            reverse("main:get_experience_json")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
 
     def test_completed_experience(self):
         self.experience.ended_at = timezone.now()
         self.experience.save()
-        response = self.client.get(reverse("main:show_experience"))
+
+        response = self.client.get(
+            reverse("main:get_experience_json")
+        )
+
+        data = response.json()
 
         self.assertFalse(self.experience.is_ongoing)
-        self.assertContains(response, "Selesai")
-        self.assertNotContains(response, "Sedang berlangsung")
+        self.assertFalse(
+            data[0]["fields"]["is_ongoing"]
+        )
 
     def test_education_url_and_template(self):
-        response = self.client.get(reverse("main:show_education"))
+        response = self.client.get(
+            reverse("main:show_education")
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "education.html")
@@ -73,7 +193,9 @@ class MainTest(TestCase):
             year="2024 - Present",
         )
 
-        response = self.client.get(reverse("main:show_education"))
+        response = self.client.get(
+            reverse("main:show_education")
+        )
 
         self.assertContains(response, education.institution)
         self.assertContains(response, education.degree)
@@ -82,11 +204,13 @@ class MainTest(TestCase):
     def test_empty_education_page(self):
         Education.objects.all().delete()
 
-        response = self.client.get(reverse("main:show_education"))
+        response = self.client.get(
+            reverse("main:show_education")
+        )
 
         self.assertContains(
             response,
-            "Belum ada data pendidikan yang ditambahkan."
+            "Belum ada data pendidikan yang ditambahkan.",
         )
 
     def test_education_with_graduation_year(self):
@@ -103,10 +227,12 @@ class MainTest(TestCase):
 
         self.assertContains(
             response,
-            str(education.graduation_year)
+            str(education.graduation_year),
         )
 
     def test_create_education(self):
+        self.client.force_login(self.user)
+
         response = self.client.post(
             reverse("main:create_education"),
             {
@@ -114,7 +240,7 @@ class MainTest(TestCase):
                 "degree": "S1 Sistem Informasi",
                 "year": "2024 - Present",
                 "graduation_year": 2028,
-            }
+            },
         )
 
         self.assertEqual(response.status_code, 302)
@@ -125,6 +251,8 @@ class MainTest(TestCase):
         )
 
     def test_update_education(self):
+        self.client.force_login(self.user)
+
         education = Education.objects.create(
             institution="Universitas Indonesia",
             degree="S1 Sistem Informasi",
@@ -135,14 +263,14 @@ class MainTest(TestCase):
         response = self.client.post(
             reverse(
                 "main:update_education",
-                args=[education.id]
+                args=[education.id],
             ),
             {
                 "institution": "Universitas Indonesia",
                 "degree": "S1 Ilmu Komputer",
                 "year": "2024 - Present",
                 "graduation_year": 2028,
-            }
+            },
         )
 
         self.assertEqual(response.status_code, 302)
@@ -151,10 +279,12 @@ class MainTest(TestCase):
 
         self.assertEqual(
             education.degree,
-            "S1 Ilmu Komputer"
+            "S1 Ilmu Komputer",
         )
 
     def test_delete_education(self):
+        self.client.force_login(self.user)
+
         education = Education.objects.create(
             institution="Universitas Indonesia",
             degree="S1 Sistem Informasi",
@@ -165,7 +295,7 @@ class MainTest(TestCase):
         response = self.client.post(
             reverse(
                 "main:delete_education",
-                args=[education.id]
+                args=[education.id],
             )
         )
 
@@ -181,7 +311,6 @@ class MainTest(TestCase):
             institution="Universitas Indonesia",
             degree="S1 Sistem Informasi",
             year="2024 - Present",
-            graduation_year=2028,
         )
 
         response = self.client.get(
@@ -191,13 +320,16 @@ class MainTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response["Content-Type"],
-            "application/json"
+            "application/json",
         )
-        self.assertContains(
-            response,
-            education.institution
+
+        data = response.json()
+
+        self.assertEqual(
+            data[0]["fields"]["institution"],
+            education.institution,
         )
-        self.assertContains(
-            response,
-            str(education.graduation_year)
+        self.assertEqual(
+            data[0]["fields"]["graduation_year"],
+            education.graduation_year,
         )

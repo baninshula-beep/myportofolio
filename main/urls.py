@@ -3,6 +3,7 @@ from django.urls import path
 from main.views import (
     show_main,
     show_experience,
+    get_experience_json,
     create_experience,
     update_experience,
     delete_experience,
@@ -58,6 +59,18 @@ urlpatterns = [
         "experience/<uuid:experience_id>/star/",
         toggle_star,
         name="toggle_star"
+    ),
+
+    path(
+        "experience/",
+        show_experience,
+        name="show_experience"
+    ),
+
+    path(
+        "api/experience/",
+        get_experience_json,
+        name="get_experience_json"
     ),
 
     path(

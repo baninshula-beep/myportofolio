@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core import serializers
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied
@@ -74,20 +74,76 @@ def show_main(request):
 
 
 def show_experience(request):
-    # Editor access is controlled through Django's "Editor" group.
-    # This flag is passed to the template to show authorized actions.
     is_editor = (
         request.user.is_authenticated
         and request.user.groups.filter(name="Editor").exists()
     )
 
+    title_query = request.GET.get("title", "").strip()
+
     context = {
         "name": "Banin Shula Afiqah Aradena",
-        "experience_list": Experience.objects.all(),
         "is_editor": is_editor,
+        "title_query": title_query,
     }
 
     return render(request, "experience.html", context)
+
+def get_experience_json(request):
+    title_query = request.GET.get("title", "").strip()
+
+    experiences = (
+        Experience.objects
+        .prefetch_related("starred_by")
+        .all()
+    )
+
+    if title_query:
+        experiences = experiences.filter(
+            title__icontains=title_query
+        )
+
+    data = []
+
+    for experience in experiences:
+        starred_users = experience.starred_by.all()
+
+        is_starred = (
+            request.user in starred_users
+            if request.user.is_authenticated
+            else False
+        )
+
+        starred_by_names = ", ".join(
+            user.username
+            for user in starred_users
+        )
+
+        data.append({
+            "pk": str(experience.id),
+            "fields": {
+                "title": experience.title,
+                "description": experience.description,
+                "category": experience.get_category_display(),
+                "started_at": experience.started_at.strftime("%b %Y"),
+                "ended_at": (
+                    experience.ended_at.strftime("%b %Y")
+                    if experience.ended_at
+                    else None
+                ),
+                "is_ongoing": experience.is_ongoing,
+                "thumbnail_url": (
+                    experience.thumbnail.url
+                    if experience.thumbnail
+                    else None
+                ),
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+                "starred_by_names": starred_by_names,
+            },
+        })
+
+    return JsonResponse(data, safe=False)
 
 @login_required
 def create_experience(request):

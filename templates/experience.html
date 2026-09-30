@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block meta %}
     <title>Experience - {{ name }}</title>
@@ -34,176 +35,111 @@
 
             </div>
 
-            <div class="experience-grid">
+            <form
+                id="experience-search-form"
+                class="education-search"
+            >
+                <input
+                    type="search"
+                    id="search-input"
+                    name="title"
+                    value="{{ title_query }}"
+                    placeholder="Cari berdasarkan nama experience"
+                    class="education-search__input"
+                    aria-label="Cari berdasarkan nama experience"
+                >
 
-                {% for experience in experience_list %}
+                <button
+                    type="submit"
+                    class="button"
+                >
+                    Cari
+                </button>
+            </form>
 
-                    <article class="experience-card">
+            <!--
+                CSRF token disediakan oleh Django template
+                agar dapat digunakan oleh JavaScript untuk
+                form POST yang dibuat secara dinamis.
+            -->
+            <form id="csrf-form" class="hide">
+                {% csrf_token %}
+            </form>
 
-                        {% if experience.thumbnail %}
-                            <div class="experience-image">
-                                <img
-                                    src="{{ experience.thumbnail.url }}"
-                                    alt="{{ experience.title }}"
-                                >
-                            </div>
-                        {% endif %}
-
-                        <div class="experience-card-content">
-
-                            <p class="experience-date">
-                                {{ experience.started_at|date:"M Y" }}
-
-                                {% if experience.ended_at %}
-                                    - {{ experience.ended_at|date:"M Y" }}
-                                {% else %}
-                                    - Present
-                                {% endif %}
-                            </p>
-
-                            <h2>
-                                {{ experience.title }}
-                            </h2>
-
-                            <p class="experience-role">
-                                {{ experience.get_category_display }}
-                            </p>
-
-                            <p class="experience-description">
-                                {{ experience.description }}
-                            </p>
-
-                            <div class="project-actions">
-
-                                {% if user.is_superuser or is_editor %}
-
-                                    <a
-                                        href="{% url 'main:update_experience' experience.id %}"
-                                        class="button"
-                                    >
-                                        Edit
-                                    </a>
-
-                                {% endif %}
-
-                                {% if user.is_superuser %}
-
-                                    <button
-                                        type="button"
-                                        class="button button-danger"
-                                        popovertarget="delete-experience-{{ experience.id }}"
-                                    >
-                                        Hapus
-                                    </button>
-
-                                {% endif %}
-
-                                <form
-                                    method="post"
-                                    action="{% url 'main:toggle_star' experience.id %}"
-                                >
-                                    {% csrf_token %}
-
-                                    <button type="submit" class="button">
-                                        {% if user in experience.starred_by.all %}
-                                            ★ Unstar
-                                        {% else %}
-                                            ☆ Star
-                                        {% endif %}
-
-                                        ({{ experience.starred_by.count }})
-                                    </button>
-                                </form>
-
-                            </div>
-
-                        </div>
-                        
-                    {% if user.is_superuser %}
-                        <div
-                            id="delete-experience-{{ experience.id }}"
-                            class="education-delete-modal"
-                            popover="auto"
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="delete-experience-title-{{ experience.id }}"
-                        >
-
-                            <button
-                                type="button"
-                                class="education-delete-modal__backdrop"
-                                popovertarget="delete-experience-{{ experience.id }}"
-                                popovertargetaction="hide"
-                                aria-label="Tutup konfirmasi hapus"
-                            ></button>
-
-                            <div class="education-delete-modal__content">
-
-                                <button
-                                    type="button"
-                                    class="education-delete-modal__close"
-                                    popovertarget="delete-experience-{{ experience.id }}"
-                                    popovertargetaction="hide"
-                                    aria-label="Tutup konfirmasi hapus"
-                                >
-                                    ×
-                                </button>
-
-                                <h2 id="delete-experience-title-{{ experience.id }}">
-                                    Hapus Experience?
-                                </h2>
-
-                                <p>
-                                    Apakah kamu yakin ingin menghapus
-                                    <strong>{{ experience.title }}</strong>?
-                                </p>
-
-                                <div class="education-delete-modal__actions">
-
-                                    <button
-                                        type="button"
-                                        class="button button-secondary"
-                                        popovertarget="delete-experience-{{ experience.id }}"
-                                        popovertargetaction="hide"
-                                    >
-                                        Batal
-                                    </button>
-
-                                    <form
-                                        method="post"
-                                        action="{% url 'main:delete_experience' experience.id %}"
-                                    >
-                                        {% csrf_token %}
-
-                                        <button
-                                            type="submit"
-                                            class="button button-danger"
-                                        >
-                                            Ya, Hapus
-                                        </button>
-                                    </form>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-                    {% endif %}    
-
-                    </article>
-
-                {% empty %}
-
-                    <p class="empty-state">
-                        Belum ada pengalaman yang ditambahkan.
-                    </p>
-
-                {% endfor %}
-
+            <!--
+                State loading ditampilkan saat JavaScript
+                sedang mengambil data Experience.
+            -->
+            <div
+                id="loading"
+                class="empty-state hide"
+            >
+                <p>Memuat experience...</p>
             </div>
+
+            <!--
+                State error ditampilkan jika request AJAX gagal.
+            -->
+            <div
+                id="error"
+                class="empty-state hide"
+            >
+                <p>
+                    Gagal memuat data experience.
+                    Silakan coba lagi.
+                </p>
+            </div>
+
+            <!--
+                State empty ditampilkan jika endpoint
+                mengembalikan array Experience kosong.
+            -->
+            <div
+                id="empty"
+                class="empty-state hide"
+            >
+                <p>
+                    Belum ada pengalaman yang ditambahkan
+                    atau ditemukan.
+                </p>
+            </div>
+
+            <!--
+                JavaScript akan membuat seluruh Experience card
+                secara dinamis di dalam container ini.
+            -->
+            <div
+                id="grid"
+                class="experience-grid hide"
+            ></div>
 
         </div>
     </section>
 </main>
+
+<!--
+    URL dan permission dari Django diberikan kepada
+    JavaScript melalui object konfigurasi.
+    
+    File experience.js tetap menjadi static JavaScript
+    sehingga tidak mengandung Django template tags.
+-->
+<script>
+    window.experienceConfig = {
+        endpoint: "{% url 'main:get_experience_json' %}",
+
+        editUrl: "{% url 'main:update_experience' '00000000-0000-0000-0000-000000000000' %}",
+
+        deleteUrl: "{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}",
+
+        starUrl: "{% url 'main:toggle_star' '00000000-0000-0000-0000-000000000000' %}",
+
+        isSuperuser: {{ user.is_superuser|yesno:"true,false" }},
+
+        isEditor: {{ is_editor|yesno:"true,false" }}
+    };
+</script>
+
+<script src="{% static 'js/experience.js' %}"></script>
 
 {% endblock content %}
