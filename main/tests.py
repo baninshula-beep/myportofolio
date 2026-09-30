@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.models import User
+from main.forms import ExperienceForm
 
 from main.models import Experience, Education
 
@@ -226,6 +227,43 @@ class MainTest(TestCase):
         self.assertIn(
             "title",
             data["errors"],
+        )
+
+    def test_experience_form_strips_html_tags(self):
+        form = ExperienceForm(
+            data={
+                "title": "<b>COMPFEST 18</b>",
+                "description": "<p>Marketing and Business Development</p>",
+                "category": "part-time",
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+
+        self.assertEqual(
+            form.cleaned_data["title"],
+            "COMPFEST 18",
+        )
+
+        self.assertEqual(
+            form.cleaned_data["description"],
+            "Marketing and Business Development",
+        )
+
+    def test_experience_form_rejects_html_only_title(self):
+        form = ExperienceForm(
+            data={
+                "title": "<img src='x' onerror=\"alert('XSS!')\">",
+                "description": "Testing XSS payload",
+                "category": "part-time",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+
+        self.assertIn(
+            "title",
+            form.errors,
         )
 
     def test_empty_experience_page(self):
