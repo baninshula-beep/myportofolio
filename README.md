@@ -72,3 +72,60 @@ Pada Tugas 4, saya menggunakan ChatGPT sebagai bantuan dalam memahami dan mengim
 Saya menyadari bahwa AI tidak selalu mengetahui kondisi terbaru dari project saya, seperti struktur file, perubahan kode, dan hasil implementasi yang sudah dilakukan. Karena itu, saya tetap memeriksa saran AI dengan membandingkannya dengan kode project, requirement tugas, serta menjalankan testing untuk memastikan hasilnya sesuai.
 
 Strategi prompting yang saya gunakan adalah memberikan konteks project, potongan kode, requirement tugas, serta error atau hasil testing yang saya temukan. Setelah mendapatkan saran, saya menerapkannya secara bertahap dan menguji kembali hasilnya, termasuk melakukan pengecekan terhadap hak akses Guest, Normal User, Editor, dan Superuser. Dengan demikian, AI saya gunakan sebagai alat bantu memahami konsep, debugging, dan code review, bukan sebagai pengganti proses pemahaman dan pengujian kode.
+
+### Tugas 5
+
+**1. Apa itu debouncing dan mengapa berguna pada AJAX search?**
+
+Debouncing adalah teknik untuk menunda eksekusi suatu fungsi sampai pengguna berhenti melakukan input selama waktu tertentu. Pada AJAX search, debouncing berguna agar request tidak dikirim pada setiap perubahan karakter yang diketik pengguna. Dengan demikian, jumlah request ke server dapat dikurangi dan penggunaan resource menjadi lebih efisien. Hasilnya, fitur search menjadi lebih responsif dan server tidak menerima terlalu banyak request yang sebenarnya tidak diperlukan.
+
+**2. Apa yang dilakukan `await` ketika digunakan bersama `fetch()` dan apa yang terjadi jika tidak menggunakan `await`?**
+
+`fetch()` mengembalikan sebuah `Promise` yang merepresentasikan proses asynchronous untuk melakukan HTTP request. `await` digunakan untuk menunggu sampai Promise tersebut selesai sebelum hasilnya digunakan pada baris kode berikutnya.
+
+Contohnya, ketika menggunakan `await fetch(...)`, program akan menunggu response dari server sebelum melanjutkan proses untuk membaca response tersebut. Jika `await` tidak digunakan, kode dapat langsung melanjutkan eksekusi tanpa menunggu Promise selesai. Akibatnya, program dapat mencoba menggunakan hasil request sebelum data tersedia, atau harus menangani Promise tersebut menggunakan mekanisme asynchronous lainnya seperti `.then()`.
+
+**3. Apa itu XSS dan mengapa data yang dirender melalui AJAX/JavaScript lebih rentan dibandingkan output langsung dari Django template?**
+
+XSS atau Cross-Site Scripting adalah serangan ketika input yang tidak aman dapat diperlakukan sebagai HTML atau JavaScript oleh browser sehingga script berbahaya dapat dijalankan dalam konteks halaman web.
+
+Data yang dirender melalui AJAX/JavaScript perlu mendapat perhatian khusus karena data dari server kemudian dimasukkan secara dinamis ke DOM menggunakan JavaScript. Jika data yang tidak terpercaya langsung dimasukkan sebagai HTML, misalnya melalui `innerHTML`, browser dapat menginterpretasikan tag atau atribut berbahaya sebagai bagian dari halaman.
+
+Pada Django template, output dapat di-escape oleh template engine secara otomatis dalam kondisi penggunaan normal. Namun, ketika data dimasukkan secara manual melalui JavaScript, developer harus memastikan proses escaping dilakukan dengan benar. Pada implementasi ini, data yang akan dimasukkan ke HTML di-escape menggunakan `escapeHtml`, sementara input juga divalidasi dan dibersihkan di server menggunakan `strip_tags`.
+
+---
+
+### AI Disclosure Tugas 5
+
+Dalam pengerjaan Tugas 5, saya menggunakan **ChatGPT** sebagai AI assistant untuk membantu proses analisis requirement, code review, debugging, pengembangan implementasi, testing, dan dokumentasi.
+
+AI digunakan sebagai alat bantu, bukan sebagai pengganti proses pemahaman dan verifikasi. Beberapa bagian yang dibantu oleh AI meliputi:
+
+* Menganalisis requirement Tutorial 05 dan menghubungkannya dengan implementasi portfolio.
+* Melakukan audit terhadap struktur dan kode yang sudah ada sebelum perubahan dilakukan.
+* Mengidentifikasi kebutuhan penggunaan `ModelForm`, AJAX endpoint, authorization, CSRF protection, dan XSS protection.
+* Membantu merencanakan tahapan implementasi secara bertahap.
+* Membantu mengidentifikasi dan memperbaiki error pada automated tests.
+* Membantu melakukan review terhadap status code dan error handling pada endpoint AJAX.
+* Membantu menyusun dan memperbaiki dokumentasi serta komentar pada kode.
+
+Setiap saran dari AI tetap diperiksa dan disesuaikan dengan kondisi project. Implementasi kemudian diverifikasi secara manual melalui automated tests, browser testing, pemeriksaan Git diff, dan pengujian functionality pada aplikasi.
+
+#### AI Limitations and Manual Improvements
+
+AI tidak selalu mengetahui kondisi terbaru dari repository dan tidak dapat mengasumsikan bahwa struktur project sesuai dengan contoh umum Django. Oleh karena itu, kode yang sudah ada diperiksa terlebih dahulu sebelum perubahan diterapkan.
+
+Beberapa keputusan dan perbaikan dilakukan secara manual berdasarkan kondisi project dan requirement tugas, termasuk menyesuaikan endpoint dengan struktur URL yang digunakan, memastikan authorization dilakukan di server, menyesuaikan `ModelForm` dengan model yang digunakan, menambahkan validasi sanitasi pada field, memperbaiki automated tests, serta melakukan pengujian langsung pada browser.
+
+Dengan demikian, AI digunakan terutama untuk membantu analisis dan problem solving, sedangkan keputusan akhir mengenai implementasi dan hasil testing dilakukan berdasarkan project yang sebenarnya.
+
+#### AI Working Log / Prompting Log
+
+Dokumentasi percakapan yang digunakan sebagai AI working log dan prompting log selama pengerjaan Tugas 5 dapat diakses melalui:
+
+**[AI Working Log - Audit T05 Bertahap](https://chatgpt.com/share/6ac204ff-29b8-83ec-a496-9c08cc2c25fe)**
+
+Percakapan tersebut mendokumentasikan proses pengerjaan secara bertahap, mulai dari audit kode dan requirement, perencanaan perubahan, implementasi, testing, debugging, hingga penyempurnaan dokumentasi.
+
+**Prompting approach:**
+Saya memberikan requirement tugas dan kondisi kode terbaru kepada AI, kemudian meminta AI melakukan audit terhadap implementasi yang sudah ada sebelum perubahan diterapkan. Proses dilakukan secara bertahap berdasarkan milestone. Setiap perubahan diverifikasi melalui automated testing dan/atau browser testing sebelum melanjutkan ke tahap berikutnya. Ketika ditemukan error atau ketidaksesuaian, hasil testing digunakan sebagai dasar untuk menentukan perubahan berikutnya.
