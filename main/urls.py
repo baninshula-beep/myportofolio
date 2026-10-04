@@ -17,6 +17,7 @@ from main.views import (
     login_user,
     logout_user,
     create_experience_ajax,
+    create_education_ajax,
 )
 
 
@@ -24,13 +25,21 @@ app_name = "main"
 
 
 urlpatterns = [
-    path("", show_main, name="show_main"),
+    path(
+        "",
+        show_main,
+        name="show_main"
+    ),
 
     path(
         "register/",
         register,
         name="register"
     ),
+
+    # =========================
+    # EXPERIENCE
+    # =========================
 
     path(
         "experience/",
@@ -47,7 +56,7 @@ urlpatterns = [
     path(
         "experience/add-ajax/",
         create_experience_ajax,
-        name="create_experience_ajax",
+        name="create_experience_ajax"
     ),
 
     path(
@@ -69,16 +78,14 @@ urlpatterns = [
     ),
 
     path(
-        "experience/",
-        show_experience,
-        name="show_experience"
-    ),
-
-    path(
         "api/experience/",
         get_experience_json,
         name="get_experience_json"
     ),
+
+    # =========================
+    # EDUCATION
+    # =========================
 
     path(
         "education/",
@@ -92,11 +99,16 @@ urlpatterns = [
         name="create_education"
     ),
 
-    # Endpoint untuk mengambil data Education dalam format JSON.
     path(
-        "api/education/",
-        get_education_json,
-        name="get_education_json"
+        "education/add-ajax/",
+        create_education_ajax,
+        name="create_education_ajax",
+    ),
+
+    path(
+        "education/<int:education_id>/edit/",
+        update_education,
+        name="update_education"
     ),
 
     path(
@@ -106,10 +118,14 @@ urlpatterns = [
     ),
 
     path(
-        "education/<int:education_id>/edit/",
-        update_education,
-        name="update_education"
+        "api/education/",
+        get_education_json,
+        name="get_education_json"
     ),
+
+    # =========================
+    # AUTH
+    # =========================
 
     path(
         "login/",
@@ -122,11 +138,4 @@ urlpatterns = [
         logout_user,
         name="logout"
     ),
-
-
-
-
-
-
-
 ]

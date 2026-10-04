@@ -12,163 +12,684 @@
 
             <div class="education-header">
                 <div>
-                    <p class="section-kicker">Pendidikan saya</p>
-                    <h1>Education</h1>
+                    <p class="section-kicker">
+                        Pendidikan saya
+                    </p>
+
+                    <h1>
+                        Education
+                    </h1>
                 </div>
 
-                <a href="{% url 'main:create_education' %}" class="button">
-                    + Tambah Pendidikan
-                </a>
+                {% if user.is_authenticated and user.is_superuser %}
+                    <button
+                        type="button"
+                        class="button"
+                        popovertarget="add-education-modal"
+                    >
+                        + Tambah Pendidikan
+                    </button>
+
+                    <div
+                        id="add-education-modal"
+                        class="education-delete-modal"
+                        popover="auto"
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <button
+                            type="button"
+                            class="education-delete-modal__backdrop"
+                            popovertarget="add-education-modal"
+                            popovertargetaction="hide"
+                            aria-label="Tutup form tambah pendidikan"
+                        ></button>
+
+                        <div class="education-delete-modal__content">
+
+                            <button
+                                type="button"
+                                class="education-delete-modal__close"
+                                popovertarget="add-education-modal"
+                                popovertargetaction="hide"
+                                aria-label="Tutup form tambah pendidikan"
+                            >
+                                ×
+                            </button>
+
+                            <h2>
+                                Tambah Pendidikan
+                            </h2>
+
+                            <form
+                                id="education-create-form"
+                                method="post"
+                            >
+                                {% csrf_token %}
+
+                                <div class="form-group">
+                                    <label for="{{ create_form.institution.id_for_label }}">
+                                        {{ create_form.institution.label }}
+                                    </label>
+
+                                    {{ create_form.institution }}
+
+                                    <p
+                                        class="form-error"
+                                        id="education-error-institution"
+                                    ></p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ create_form.degree.id_for_label }}">
+                                        {{ create_form.degree.label }}
+                                    </label>
+
+                                    {{ create_form.degree }}
+
+                                    <p
+                                        class="form-error"
+                                        id="education-error-degree"
+                                    ></p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ create_form.year.id_for_label }}">
+                                        {{ create_form.year.label }}
+                                    </label>
+
+                                    {{ create_form.year }}
+
+                                    <p
+                                        class="form-error"
+                                        id="education-error-year"
+                                    ></p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ create_form.graduation_year.id_for_label }}">
+                                        {{ create_form.graduation_year.label }}
+                                    </label>
+
+                                    {{ create_form.graduation_year }}
+
+                                    <p
+                                        class="form-error"
+                                        id="education-error-graduation_year"
+                                    ></p>
+                                </div>
+
+                                <div class="education-delete-modal__actions">
+
+                                    <button
+                                        type="button"
+                                        class="button button-secondary"
+                                        popovertarget="add-education-modal"
+                                        popovertargetaction="hide"
+                                        id="education-cancel-button"
+                                    >
+                                        Batal
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        class="button"
+                                        id="education-submit-button"
+                                    >
+                                        Tambah Pendidikan
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+                {% endif %}
             </div>
 
-            <form method="get"
-                  action="{% url 'main:show_education' %}"
-                  class="education-search">
-
+            <form
+                method="get"
+                action="{% url 'main:show_education' %}"
+                class="education-search"
+                id="education-search-form"
+            >
                 <input
                     type="search"
                     name="institution"
                     value="{{ institution_query }}"
                     placeholder="Cari berdasarkan institusi"
                     class="education-search__input"
+                    id="education-search-input"
                     aria-label="Cari berdasarkan institusi"
                 >
 
-                <button type="submit" class="button">
+                <button
+                    type="submit"
+                    class="button"
+                >
                     Cari
                 </button>
             </form>
 
-            <div class="experience-grid">
-
-                {% for education in education_list %}
-
-                    <article class="experience-card">
-
-                        <p class="experience-date">
-                            {{ education.year }}
-                        </p>
-
-                        <h2>
-                            {{ education.institution }}
-                        </h2>
-
-                        <p class="experience-role">
-                            {{ education.degree }}
-                        </p>
-                        
-                        {% if education.graduation_year %}
-                            <p class="experience-date">
-                                Lulus {{ education.graduation_year }}
-                            </p>
-                        {% endif %}
-                        <div class="project-actions">
-
-                            <a
-                                href="{% url 'main:update_education' education.id %}"
-                                class="button"
-                            >
-                                Edit
-                            </a>
-
-                            <button
-                                type="button"
-                                class="button button-danger"
-                                popovertarget="delete-education-{{ education.id }}"
-                            >
-                                Hapus Pendidikan
-                            </button>
-
-                            <div
-                                id="delete-education-{{ education.id }}"
-                                class="education-delete-modal"
-                                popover="auto"
-                                role="dialog"
-                                aria-modal="true"
-                                aria-labelledby="delete-education-title-{{ education.id }}"
-                            >
-
-                                <button
-                                    type="button"
-                                    class="education-delete-modal__backdrop"
-                                    popovertarget="delete-education-{{ education.id }}"
-                                    popovertargetaction="hide"
-                                    aria-label="Tutup konfirmasi hapus"
-                                ></button>
-
-                                <div class="education-delete-modal__content">
-
-                                    <button
-                                        type="button"
-                                        class="education-delete-modal__close"
-                                        popovertarget="delete-education-{{ education.id }}"
-                                        popovertargetaction="hide"
-                                        aria-label="Tutup konfirmasi hapus"
-                                    >
-                                        ×
-                                    </button>
-
-                                    <h2 id="delete-education-title-{{ education.id }}">
-                                        Hapus Pendidikan?
-                                    </h2>
-
-                                    <p>
-                                        Apakah kamu yakin ingin menghapus
-                                        <strong>{{ education.institution }}</strong>?
-                                    </p>
-
-                                    <div class="education-delete-modal__actions">
-
-                                        <button
-                                            type="button"
-                                            class="button button-secondary"
-                                            popovertarget="delete-education-{{ education.id }}"
-                                            popovertargetaction="hide"
-                                        >
-                                            Batal
-                                        </button>
-
-                                        <form
-                                            method="post"
-                                            action="{% url 'main:delete_education' education.id %}"
-                                        >
-                                            {% csrf_token %}
-
-                                            <button
-                                                type="submit"
-                                                class="button button-danger"
-                                            >
-                                                Ya, Hapus
-                                            </button>
-                                        </form>
-
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </article>
-
-                {% empty %}
-
-                    {% if institution_query %}
-                        <p class="empty-state">
-                            Tidak ada pendidikan dengan institusi tersebut.
-                        </p>
-                    {% else %}
-                        <p class="empty-state">
-                            Belum ada data pendidikan yang ditambahkan.
-                        </p>
-                    {% endif %}
-
-                {% endfor %}
-
+            <div
+                class="experience-grid"
+                id="education-container"
+            >
+                <p class="empty-state">
+                    Memuat data pendidikan...
+                </p>
             </div>
 
         </div>
     </section>
 </main>
+
+<script>
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+
+        div.textContent = value ?? "";
+
+        return div.innerHTML;
+    }
+
+    const CAN_MANAGE_EDUCATION =
+        {% if user.is_authenticated and user.is_superuser %}
+            true
+        {% else %}
+            false
+        {% endif %};
+
+    function getCookie(name) {
+        const cookies = document.cookie
+            .split(";")
+            .map((cookie) => cookie.trim());
+
+        for (const cookie of cookies) {
+            if (cookie.startsWith(`${name}=`)) {
+                return decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
+            }
+        }
+
+        return null;
+    }
+
+    function showEducationToast(message) {
+        if (typeof showToast === "function") {
+            showToast(message);
+            return;
+        }
+
+        console.log(message);
+    }
+
+    function clearEducationErrors() {
+        const errorElements = document.querySelectorAll(
+            "[id^='education-error-']"
+        );
+
+        errorElements.forEach((element) => {
+            element.textContent = "";
+        });
+    }
+
+    function showEducationFormErrors(errors) {
+        clearEducationErrors();
+
+        Object.entries(errors).forEach(
+            ([fieldName, fieldErrors]) => {
+
+                const errorElement =
+                    document.getElementById(
+                        `education-error-${fieldName}`
+                    );
+
+                if (!errorElement) {
+                    return;
+                }
+
+                errorElement.textContent =
+                    fieldErrors
+                        .map((error) => error.message)
+                        .join(" ");
+            }
+        );
+    }
+
+    async function loadEducation(query = "") {
+        const educationContainer =
+            document.getElementById(
+                "education-container"
+            );
+
+        if (!educationContainer) {
+            return;
+        }
+
+        educationContainer.innerHTML = `
+            <p class="empty-state">
+                Memuat data pendidikan...
+            </p>
+        `;
+
+        try {
+            const url = new URL(
+                "{% url 'main:get_education_json' %}",
+                window.location.origin
+            );
+
+            if (query) {
+                url.searchParams.set(
+                    "institution",
+                    query
+                );
+            }
+
+            const response = await fetch(
+                url,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `Gagal mengambil data pendidikan (${response.status}).`
+                );
+            }
+
+            const educations =
+                await response.json();
+
+            if (educations.length === 0) {
+                educationContainer.innerHTML = `
+                    <p class="empty-state">
+                        ${
+                            query
+                                ? "Tidak ada pendidikan dengan institusi tersebut."
+                                : "Belum ada data pendidikan yang ditambahkan."
+                        }
+                    </p>
+                `;
+
+                return;
+            }
+
+            educationContainer.innerHTML =
+                educations.map(
+                    (education) => {
+
+                        const fields =
+                            education.fields;
+
+                        const institution =
+                            escapeHtml(
+                                fields.institution
+                            );
+
+                        const degree =
+                            escapeHtml(
+                                fields.degree
+                            );
+
+                        const year =
+                            escapeHtml(
+                                fields.year
+                            );
+
+                        const graduationYear =
+                            fields.graduation_year
+                                ? escapeHtml(
+                                    fields.graduation_year
+                                )
+                                : "";
+
+                        const educationId =
+                            Number(
+                                education.pk
+                            );
+
+                        const editUrl =
+                            "{% url 'main:update_education' 0 %}"
+                                .replace(
+                                    "/0/",
+                                    `/${educationId}/`
+                                );
+
+                        const deleteUrl =
+                            "{% url 'main:delete_education' 0 %}"
+                                .replace(
+                                    "/0/",
+                                    `/${educationId}/`
+                                );
+
+                        return `
+                            <article class="experience-card">
+
+                                <p class="experience-date">
+                                    ${year}
+                                    ${
+                                        graduationYear
+                                            ? ` - ${graduationYear}`
+                                            : ""
+                                    }
+                                </p>
+
+                                <h2>
+                                    ${institution}
+                                </h2>
+
+                                <p class="experience-role">
+                                    ${degree}
+                                </p>
+
+                                ${
+                                    CAN_MANAGE_EDUCATION
+                                        ? `
+                                            <div class="project-actions">
+
+                                                <a
+                                                    href="${editUrl}"
+                                                    class="button"
+                                                >
+                                                    Edit
+                                                </a>
+
+                                                <button
+                                                    type="button"
+                                                    class="button button-danger"
+                                                    popovertarget="delete-education-${educationId}"
+                                                >
+                                                    Hapus Pendidikan
+                                                </button>
+
+                                                <div
+                                                    id="delete-education-${educationId}"
+                                                    class="education-delete-modal"
+                                                    popover="auto"
+                                                    role="dialog"
+                                                    aria-modal="true"
+                                                >
+
+                                                    <button
+                                                        type="button"
+                                                        class="education-delete-modal__backdrop"
+                                                        popovertarget="delete-education-${educationId}"
+                                                        popovertargetaction="hide"
+                                                        aria-label="Tutup konfirmasi hapus"
+                                                    ></button>
+
+                                                    <div class="education-delete-modal__content">
+
+                                                        <button
+                                                            type="button"
+                                                            class="education-delete-modal__close"
+                                                            popovertarget="delete-education-${educationId}"
+                                                            popovertargetaction="hide"
+                                                            aria-label="Tutup konfirmasi hapus"
+                                                        >
+                                                            ×
+                                                        </button>
+
+                                                        <h2>
+                                                            Hapus Pendidikan?
+                                                        </h2>
+
+                                                        <p>
+                                                            Apakah kamu yakin ingin menghapus
+                                                            <strong>
+                                                                ${institution}
+                                                            </strong>?
+                                                        </p>
+
+                                                        <div class="education-delete-modal__actions">
+
+                                                            <button
+                                                                type="button"
+                                                                class="button button-secondary"
+                                                                popovertarget="delete-education-${educationId}"
+                                                                popovertargetaction="hide"
+                                                            >
+                                                                Batal
+                                                            </button>
+
+                                                            <form
+                                                                method="post"
+                                                                action="${deleteUrl}"
+                                                            >
+
+                                                                {% csrf_token %}
+
+                                                                <button
+                                                                    type="submit"
+                                                                    class="button button-danger"
+                                                                >
+                                                                    Ya, Hapus
+                                                                </button>
+
+                                                            </form>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        `
+                                        : ""
+                                }
+
+                            </article>
+                        `;
+                    }
+                ).join("");
+
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat Education:",
+                error
+            );
+
+            educationContainer.innerHTML = `
+                <p class="empty-state">
+                    Gagal memuat data pendidikan.
+                </p>
+            `;
+        }
+    }
+
+    const educationSearchForm =
+        document.getElementById(
+            "education-search-form"
+        );
+
+    const educationSearchInput =
+        document.getElementById(
+            "education-search-input"
+        );
+
+    let educationSearchTimeout = null;
+
+    if (educationSearchForm) {
+        educationSearchForm.addEventListener(
+            "submit",
+            function (event) {
+
+                event.preventDefault();
+
+                clearTimeout(
+                    educationSearchTimeout
+                );
+
+                loadEducation(
+                    educationSearchInput.value.trim()
+                );
+            }
+        );
+    }
+
+    if (educationSearchInput) {
+        educationSearchInput.addEventListener(
+            "input",
+            function () {
+
+                clearTimeout(
+                    educationSearchTimeout
+                );
+
+                educationSearchTimeout =
+                    setTimeout(
+                        function () {
+                            loadEducation(
+                                educationSearchInput.value.trim()
+                            );
+                        },
+                        300
+                    );
+            }
+        );
+    }
+
+    const educationCreateForm =
+        document.getElementById(
+            "education-create-form"
+        );
+
+    const educationSubmitButton =
+        document.getElementById(
+            "education-submit-button"
+        );
+
+    if (educationCreateForm) {
+        educationCreateForm.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+                clearEducationErrors();
+
+                if (educationSubmitButton) {
+                    educationSubmitButton.disabled = true;
+                    educationSubmitButton.textContent =
+                        "Menyimpan...";
+                }
+
+                try {
+                    const formData =
+                        new FormData(
+                            educationCreateForm
+                        );
+
+                    const response =
+                        await fetch(
+                            "{% url 'main:create_education_ajax' %}",
+                            {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    "X-CSRFToken":
+                                        getCookie("csrftoken"),
+                                    "Accept":
+                                        "application/json"
+                                }
+                            }
+                        );
+
+                    const data =
+                        await response.json();
+
+                    if (response.status === 201) {
+
+                        educationCreateForm.reset();
+
+                        clearEducationErrors();
+
+                        const modal =
+                            document.getElementById(
+                                "add-education-modal"
+                            );
+
+                        if (
+                            modal &&
+                            typeof modal.hidePopover === "function"
+                        ) {
+                            modal.hidePopover();
+                        }
+
+                        showEducationToast(
+                            data.message ||
+                            "Pendidikan berhasil ditambahkan."
+                        );
+
+                        await loadEducation(
+                            educationSearchInput
+                                ? educationSearchInput.value.trim()
+                                : ""
+                        );
+
+                        return;
+                    }
+
+                    if (response.status === 400) {
+                        showEducationFormErrors(
+                            data.errors || {}
+                        );
+
+                        showEducationToast(
+                            "Periksa kembali data pendidikan."
+                        );
+
+                        return;
+                    }
+
+                    if (response.status === 403) {
+                        showEducationToast(
+                            data.message ||
+                            "Kamu tidak memiliki izin untuk menambahkan pendidikan."
+                        );
+
+                        return;
+                    }
+
+                    throw new Error(
+                        `Gagal menambahkan pendidikan (${response.status}).`
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Gagal menambahkan Education:",
+                        error
+                    );
+
+                    showEducationToast(
+                        "Terjadi kesalahan saat menambahkan pendidikan."
+                    );
+
+                } finally {
+
+                    if (educationSubmitButton) {
+                        educationSubmitButton.disabled = false;
+                        educationSubmitButton.textContent =
+                            "Tambah Pendidikan";
+                    }
+                }
+            }
+        );
+    }
+
+    loadEducation(
+        "{{ institution_query|escapejs }}"
+    );
+</script>
 
 {% endblock content %}

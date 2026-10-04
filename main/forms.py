@@ -63,6 +63,55 @@ class EducationForm(ModelForm):
             ),
         }
 
+    def clean_institution(self):
+        institution = strip_tags(
+            self.cleaned_data["institution"]
+        ).strip()
+
+        if not institution:
+            raise ValidationError(
+                "Institusi tidak boleh kosong atau hanya berisi tag HTML."
+            )
+
+        return institution
+
+    def clean_degree(self):
+        degree = strip_tags(
+            self.cleaned_data["degree"]
+        ).strip()
+
+        if not degree:
+            raise ValidationError(
+                "Gelar / Program Studi tidak boleh kosong atau hanya berisi tag HTML."
+            )
+
+        return degree
+
+    def clean_year(self):
+        year = strip_tags(
+            self.cleaned_data["year"]
+        ).strip()
+
+        if not year:
+            raise ValidationError(
+                "Tahun tidak boleh kosong atau hanya berisi tag HTML."
+            )
+
+        return year
+
+    def clean_graduation_year(self):
+        graduation_year = self.cleaned_data.get(
+            "graduation_year"
+        )
+
+        if graduation_year is not None:
+            if graduation_year < 1900 or graduation_year > 2100:
+                raise ValidationError(
+                    "Tahun lulus harus berada antara 1900 dan 2100."
+                )
+
+        return graduation_year
+
 
 class ExperienceForm(ModelForm):
     class Meta:
@@ -92,18 +141,14 @@ class ExperienceForm(ModelForm):
                     "maxlength": 255,
                 }
             ),
-
             "description": Textarea(
                 attrs={
                     "placeholder": "Jelaskan pengalaman ini...",
                     "rows": 5,
                 }
             ),
-
             "category": Select(),
-
             "thumbnail": FileInput(),
-
             "ended_at": DateTimeInput(
                 attrs={
                     "type": "datetime-local",
