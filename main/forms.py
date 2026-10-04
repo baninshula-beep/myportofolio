@@ -18,6 +18,9 @@ class EducationForm(ModelForm):
     class Meta:
         model = Education
 
+        # Field yang digunakan untuk menerima dan memvalidasi data pendidikan
+        # dari input pengguna sebelum disimpan ke database.
+
         # Field yang dapat diisi atau diubah pengguna melalui form.
         fields = [
             "institution",
@@ -63,6 +66,8 @@ class EducationForm(ModelForm):
             ),
         }
 
+    # Sanitasi dilakukan di sisi server agar tag HTML dari input pengguna
+    # tidak ikut disimpan sebagai bagian dari data pendidikan.
     def clean_institution(self):
         institution = strip_tags(
             self.cleaned_data["institution"]
@@ -75,6 +80,9 @@ class EducationForm(ModelForm):
 
         return institution
 
+
+    # Menghapus tag HTML dari nama gelar atau program studi
+    # sebelum data diproses lebih lanjut.
     def clean_degree(self):
         degree = strip_tags(
             self.cleaned_data["degree"]
@@ -87,6 +95,9 @@ class EducationForm(ModelForm):
 
         return degree
 
+
+    # Data tahun dibersihkan dari tag HTML dan spasi berlebih
+    # untuk menjaga konsistensi data yang disimpan.
     def clean_year(self):
         year = strip_tags(
             self.cleaned_data["year"]
@@ -156,6 +167,9 @@ class ExperienceForm(ModelForm):
             ),
         }
 
+
+    # Sanitasi server-side memastikan input tidak hanya bergantung
+    # pada validasi atau escaping di sisi frontend.
     def clean_title(self):
         title = strip_tags(
             self.cleaned_data["title"]
@@ -168,6 +182,9 @@ class ExperienceForm(ModelForm):
 
         return title
 
+
+    # Tag HTML dihapus dari deskripsi sebelum disimpan
+    # sehingga input pengguna tidak dapat menyisipkan markup HTML berbahaya.
     def clean_description(self):
         return strip_tags(
             self.cleaned_data["description"]

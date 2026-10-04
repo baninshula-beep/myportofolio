@@ -379,6 +379,10 @@ def show_education(request):
 
 
 def get_education_json(request):
+
+    # Data pendidikan dikirim sebagai JSON agar frontend dapat
+    # mengambil dan merender daftar pendidikan menggunakan AJAX
+    # tanpa melakukan reload halaman.
     institution_query = request.GET.get(
         "institution",
         ""
@@ -390,6 +394,8 @@ def get_education_json(request):
         .order_by("-id")
     )
 
+    # Filter hanya diterapkan ketika pengguna memasukkan kata pencarian,
+    # sehingga tanpa query seluruh data pendidikan tetap ditampilkan.
     if institution_query:
         educations = educations.filter(
             institution__icontains=institution_query
@@ -397,6 +403,8 @@ def get_education_json(request):
 
     data = []
 
+    # Hanya field yang dibutuhkan frontend yang dikirim melalui response
+    # untuk menjaga struktur data tetap sederhana dan mudah dirender.
     for education in educations:
         data.append({
             "pk": education.pk,
@@ -448,6 +456,9 @@ def create_education(request):
 
 @require_POST
 def create_education_ajax(request):
+    # Endpoint tetap melakukan pemeriksaan akses di server.
+    # Menyembunyikan tombol pada template saja tidak cukup untuk
+    # mencegah pengguna lain mengirim request secara langsung.
     # Hanya pemilik portfolio yang boleh menambahkan data Education.
     if not request.user.is_authenticated:
         return JsonResponse(
@@ -471,11 +482,16 @@ def create_education_ajax(request):
             status=403,
         )
 
+    # ModelForm yang sama digunakan kembali agar validasi AJAX
+    # konsisten dengan validasi data pendidikan lainnya.
     form = EducationForm(request.POST)
 
+    # Data hanya disimpan jika seluruh validasi server-side berhasil.
     if form.is_valid():
         education = form.save()
 
+        # Status 201 menunjukkan bahwa data baru berhasil dibuat,
+        # sehingga frontend dapat membedakannya dari response error.
         return JsonResponse(
             {
                 "message": "Pendidikan berhasil ditambahkan.",
@@ -484,6 +500,8 @@ def create_education_ajax(request):
             status=201,
         )
 
+    # Error validasi dikirim kembali dalam format JSON agar frontend
+    # dapat menampilkan kegagalan tanpa melakukan reload halaman.
     return JsonResponse(
         {
             "errors": form.errors.get_json_data()

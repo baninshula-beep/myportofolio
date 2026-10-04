@@ -186,6 +186,8 @@
 </main>
 
 <script>
+    // Escape karakter HTML sebelum data dari server dimasukkan ke innerHTML.
+    // Ini mencegah data pengguna diperlakukan sebagai markup HTML saat dirender.
     function escapeHtml(value) {
         const div = document.createElement("div");
 
@@ -589,6 +591,9 @@
                             educationCreateForm
                         );
 
+
+                    // Data pendidikan diambil melalui AJAX agar daftar dapat diperbarui
+                    // tanpa melakukan full page reload.
                     const response =
                         await fetch(
                             "{% url 'main:create_education_ajax' %}",

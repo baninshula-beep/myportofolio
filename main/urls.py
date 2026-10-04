@@ -59,6 +59,9 @@ urlpatterns = [
         name="create_experience_ajax"
     ),
 
+    # Endpoint AJAX digunakan oleh frontend untuk menambah data
+    # tanpa berpindah atau me-reload halaman.
+
     path(
         "experience/<uuid:experience_id>/edit/",
         update_experience,
@@ -82,6 +85,9 @@ urlpatterns = [
         get_experience_json,
         name="get_experience_json"
     ),
+
+    # Endpoint JSON menyediakan data portfolio yang akan dirender
+    # secara dinamis oleh JavaScript.
 
     # =========================
     # EDUCATION

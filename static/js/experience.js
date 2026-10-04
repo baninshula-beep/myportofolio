@@ -65,6 +65,9 @@ function displayPageSection({
  * Escape HTML sebelum data dari server dimasukkan
  * ke dalam innerHTML.
  */
+
+// Escape nilai dari server sebelum dimasukkan ke innerHTML
+// untuk mencegah eksekusi HTML atau script yang berasal dari data pengguna.
 function escapeHtml(value) {
     const div = document.createElement("div");
 
@@ -303,6 +306,9 @@ function buildExperienceCard(experience) {
  * Mengambil data Experience dari endpoint Django
  * menggunakan Fetch API.
  */
+
+// Request pencarian sebelumnya dibatalkan ketika query baru dikirim
+// agar hasil response yang sudah tidak relevan tidak menggantikan hasil terbaru.
 async function fetchExperiences(query = "") {
     if (experiencesAbortController) {
         experiencesAbortController.abort();

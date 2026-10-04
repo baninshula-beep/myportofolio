@@ -233,6 +233,8 @@ class MainTest(TestCase):
             "COMPFEST 18",
         )
 
+    # Test AJAX Experience memverifikasi alur create melalui request POST,
+    # termasuk permission dan validasi server-side.
 
     def test_create_experience_ajax_success(self):
         self.client.force_login(
@@ -366,7 +368,8 @@ class MainTest(TestCase):
             "Marketing and Business Development",
         )
 
-
+    # Pengujian sanitasi memastikan tag HTML dari input pengguna
+    # tidak disimpan sebagai bagian dari nilai field.
     def test_experience_form_rejects_html_only_title(self):
         form = ExperienceForm(
             data={
@@ -758,6 +761,10 @@ class MainTest(TestCase):
             education.graduation_year,
         )
 
+
+    # Pengujian berikut memastikan endpoint AJAX pendidikan
+    # menerapkan authentication, authorization, validasi form,
+    # dan response status yang sesuai.
     def test_create_education_ajax_superuser(self):
         self.client.force_login(self.superuser)
 
