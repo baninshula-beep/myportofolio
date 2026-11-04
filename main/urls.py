@@ -95,19 +95,19 @@ urlpatterns = [
     # secara dinamis oleh JavaScript.
 
     path(
-        "api/experience/",
+        "api/v1/experience/",
         ExperienceListCreateAPIView.as_view(),
         name="api_experience_list_create",
     ),
 
     path(
-        "api/experience/<uuid:id>/",
+        "api/v1/experience/<uuid:id>/",
         ExperienceDetailAPIView.as_view(),
         name="api_experience_detail",
     ),
 
     path(
-        "api/experience/<uuid:id>/star/",
+        "api/v1/experience/<uuid:id>/star/",
         ExperienceStarAPIView.as_view(),
         name="api_experience_star",
     ),

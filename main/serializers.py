@@ -18,7 +18,6 @@ class ExperienceSerializer(serializers.ModelSerializer):
     is_ongoing = serializers.BooleanField(read_only=True)
     star_count = serializers.SerializerMethodField()
     is_starred = serializers.SerializerMethodField()
-    starred_by_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Experience
@@ -33,7 +32,6 @@ class ExperienceSerializer(serializers.ModelSerializer):
             "is_ongoing",
             "star_count",
             "is_starred",
-            "starred_by_names",
         ]
         read_only_fields = [
             "id",
@@ -41,7 +39,6 @@ class ExperienceSerializer(serializers.ModelSerializer):
             "is_ongoing",
             "star_count",
             "is_starred",
-            "starred_by_names",
         ]
 
     def validate_title(self, value):
@@ -81,13 +78,3 @@ class ExperienceSerializer(serializers.ModelSerializer):
             return False
 
         return obj.starred_by.filter(pk=user.pk).exists()
-
-    def get_starred_by_names(self, obj):
-        if obj.pk is None:
-            return ""
-
-        usernames = obj.starred_by.values_list(
-            "username",
-            flat=True,
-        )
-        return ", ".join(usernames)

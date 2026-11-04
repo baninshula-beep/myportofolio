@@ -2,6 +2,7 @@ const experienceConfig = window.experienceConfig;
 
 let experiencesAbortController = null;
 let searchDebounceTimer = null;
+const pendingStarExperienceIds = new Set();
 
 const SEARCH_DEBOUNCE_DELAY = 300;
 
@@ -244,6 +245,7 @@ function buildExperienceCard(experience) {
     const starLabel = fields.is_starred
         ? "★ Unstar"
         : "☆ Star";
+    const isStarPending = pendingStarExperienceIds.has(String(pk));
 
     const starControl = experienceConfig.isAuthenticated
         ? `
@@ -251,6 +253,7 @@ function buildExperienceCard(experience) {
                 method="post"
                 action="${starUrl}"
                 class="experience-star-form"
+                data-experience-id="${escapeHtml(pk)}"
                 data-api-url="${escapeHtml(starApiUrl)}"
             >
                 <input
@@ -263,10 +266,14 @@ function buildExperienceCard(experience) {
                     type="submit"
                     class="button"
                     data-star-button
+                    data-star-label="${escapeHtml(starLabel)}"
+                    data-star-count="${escapeHtml(fields.star_count)}"
                     aria-pressed="${fields.is_starred}"
+                    ${isStarPending ? "disabled aria-busy=\"true\"" : ""}
                 >
-                    ${starLabel}
-                    (${fields.star_count})
+                    ${isStarPending
+                        ? `Memproses Star... (${fields.star_count})`
+                        : `${starLabel} (${fields.star_count})`}
                 </button>
 
             </form>
@@ -378,7 +385,7 @@ async function fetchExperiences(query = "") {
                 showEmpty: true,
             });
 
-            return;
+            return true;
         }
 
         experiences.forEach((experience) => {
@@ -391,11 +398,12 @@ async function fetchExperiences(query = "") {
         displayPageSection({
             showGrid: true,
         });
+        return true;
 
     } catch (error) {
 
         if (error.name === "AbortError") {
-            return;
+            return "aborted";
         }
 
         console.error(
@@ -406,6 +414,7 @@ async function fetchExperiences(query = "") {
         displayPageSection({
             showError: true,
         });
+        return false;
     }
 }
 
@@ -436,8 +445,8 @@ function getCookie(name) {
 
 
 /*
- * Mengirim perubahan Star melalui API. PUT dan DELETE menetapkan
- * state tujuan agar request ulang tidak membalik status Star.
+ * Toggle Star melalui API. Tombol dikunci selama request berlangsung,
+ * lalu daftar di-refresh dari endpoint JSON legacy setelah sukses.
  */
 async function updateExperienceStar(event) {
     const starForm = event.target.closest(
@@ -450,7 +459,8 @@ async function updateExperienceStar(event) {
 
     event.preventDefault();
 
-    if (starForm.dataset.pending === "true") {
+    const experienceId = starForm.dataset.experienceId;
+    if (pendingStarExperienceIds.has(experienceId)) {
         return;
     }
 
@@ -460,20 +470,23 @@ async function updateExperienceStar(event) {
         return;
     }
 
-    const isCurrentlyStarred = button.getAttribute("aria-pressed") === "true";
-    const method = isCurrentlyStarred ? "DELETE" : "PUT";
     const csrfToken = getCookie("csrftoken") || CSRF_TOKEN;
 
-    starForm.dataset.pending = "true";
-    button.disabled = true;
-    button.setAttribute("aria-busy", "true");
+    pendingStarExperienceIds.add(experienceId);
+    setStarPendingUI(experienceId, true);
+    const requestController = new AbortController();
+    const timeoutId = setTimeout(
+        () => requestController.abort(),
+        15000
+    );
 
     try {
         const response = await fetch(
             starForm.dataset.apiUrl,
             {
-                method,
+                method: "POST",
                 credentials: "same-origin",
+                signal: requestController.signal,
                 headers: {
                     "Accept": "application/json",
                     "X-CSRFToken": csrfToken,
@@ -482,36 +495,90 @@ async function updateExperienceStar(event) {
         );
 
         if (!response.ok) {
-            const result = await response
-                .json()
-                .catch(() => ({}));
+            let result = {};
+            try {
+                result = await response.json();
+            } catch (error) {
+                // The response body may be unavailable; reconcile from the list below.
+            }
+            throw new Error(response.status === 403
+                ? "Sesi login atau token keamanan tidak valid. Silakan login kembali."
+                : result.detail || "Star tidak dapat diperbarui. Silakan coba lagi.");
+        }
 
-            throw new Error(
-                response.status === 403
-                    ? "Sesi login atau token keamanan tidak valid. Silakan login kembali."
-                    : result.detail || "Star tidak dapat diperbarui. Silakan coba lagi."
+        const result = await response.json();
+        if (
+            typeof result.star_count !== "number" ||
+            typeof result.is_starred !== "boolean"
+        ) {
+            throw new Error("Respons Star tidak dapat dibaca dengan benar.");
+        }
+
+        const refreshResult = await refreshExperiencesForCurrentSearch();
+        if (refreshResult === false) {
+            showToast(
+                "Star berhasil diperbarui",
+                "Daftar Experience gagal disegarkan. Muat ulang daftar untuk melihat status terbaru.",
+                "error"
             );
         }
 
-        await fetchExperiences(
-            searchInput
-                ? searchInput.value.trim()
-                : ""
-        );
-
     } catch (error) {
         console.error("Failed to update experience star:", error);
+        const refreshResult = await refreshExperiencesForCurrentSearch();
+        const message = error.name === "AbortError"
+            ? "Request Star melewati batas waktu; status server sedang disinkronkan."
+            : error.message || "Terjadi kesalahan saat menghubungi server.";
+        const refreshMessage = refreshResult === true
+            ? "Daftar telah disegarkan dari server."
+            : refreshResult === "aborted"
+                ? "Penyegaran daftar terbaru masih berjalan."
+                : "Refresh daftar juga gagal; coba muat ulang halaman.";
         showToast(
-            "Gagal memperbarui Star",
-            error.message || "Terjadi kesalahan saat menghubungi server.",
+            refreshResult === false
+                ? "Status Star belum dapat disinkronkan"
+                : "Gagal mengonfirmasi perubahan Star",
+            `${message} ${refreshMessage}`,
             "error"
         );
 
     } finally {
-        starForm.dataset.pending = "false";
-        button.disabled = false;
-        button.removeAttribute("aria-busy");
+        clearTimeout(timeoutId);
+        pendingStarExperienceIds.delete(experienceId);
+        setStarPendingUI(experienceId, false);
     }
+}
+
+
+function setStarPendingUI(experienceId, isPending) {
+    gridContainer
+        .querySelectorAll(".experience-star-form[data-experience-id]")
+        .forEach((form) => {
+            if (form.dataset.experienceId !== experienceId) {
+                return;
+            }
+
+            const button = form.querySelector("[data-star-button]");
+            if (!button) {
+                return;
+            }
+
+            button.disabled = isPending;
+            if (isPending) {
+                button.setAttribute("aria-busy", "true");
+                button.textContent = `Memproses Star... (${button.dataset.starCount})`;
+            } else {
+                button.removeAttribute("aria-busy");
+                button.textContent = `${button.dataset.starLabel} (${button.dataset.starCount})`;
+            }
+        });
+}
+
+
+function refreshExperiencesForCurrentSearch() {
+    return fetchExperiences(
+        searchInput ? searchInput.value.trim() : ""
+    );
 }
 
 

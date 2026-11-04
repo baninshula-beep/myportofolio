@@ -143,35 +143,33 @@ class ExperienceAPITests(TestCase):
         )
         self.assertEqual(self.client.get(url).status_code, 404)
 
-    def test_guest_cannot_put_or_delete_star(self):
+    def test_guest_cannot_toggle_star(self):
         self.client.force_authenticate(user=None)
 
-        put_response = self.client.put(self.star_url)
-        delete_response = self.client.delete(self.star_url)
+        response = self.client.post(self.star_url)
 
-        self.assertEqual(put_response.status_code, 403)
-        self.assertEqual(delete_response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
         self.assertFalse(self.experience.starred_by.exists())
 
-    def test_authenticated_non_editor_can_put_and_delete_star(self):
+    def test_authenticated_non_editor_can_toggle_star(self):
         self.assertFalse(self.user.groups.filter(name="Editor").exists())
         self.client.force_authenticate(user=self.user)
 
-        put_response = self.client.put(self.star_url)
-        self.assertEqual(put_response.status_code, 200)
+        star_response = self.client.post(self.star_url)
+        self.assertEqual(star_response.status_code, 200)
         self.assertEqual(
-            put_response.data,
+            star_response.data,
             {"star_count": 1, "is_starred": True},
         )
 
-        delete_response = self.client.delete(self.star_url)
-        self.assertEqual(delete_response.status_code, 200)
+        unstar_response = self.client.post(self.star_url)
+        self.assertEqual(unstar_response.status_code, 200)
         self.assertEqual(
-            delete_response.data,
+            unstar_response.data,
             {"star_count": 0, "is_starred": False},
         )
 
-    def test_star_operations_are_idempotent_and_report_user_state(self):
+    def test_star_post_toggles_state_and_reports_user_state(self):
         other_user = User.objects.create_user(
             "another-user",
             password="password",
@@ -179,32 +177,60 @@ class ExperienceAPITests(TestCase):
         self.experience.starred_by.add(other_user)
         self.client.force_authenticate(user=self.user)
 
-        first_put = self.client.put(self.star_url)
-        second_put = self.client.put(self.star_url)
-        self.assertEqual(first_put.status_code, 200)
-        self.assertEqual(second_put.status_code, 200)
-        self.assertEqual(second_put.data["star_count"], 2)
-        self.assertTrue(second_put.data["is_starred"])
+        star_response = self.client.post(self.star_url)
+        self.assertEqual(star_response.status_code, 200)
+        self.assertEqual(star_response.data["star_count"], 2)
+        self.assertTrue(star_response.data["is_starred"])
         self.assertEqual(self.experience.starred_by.count(), 2)
 
-        detail_after_put = self.client.get(self.detail_url)
-        self.assertEqual(detail_after_put.data["star_count"], 2)
-        self.assertTrue(detail_after_put.data["is_starred"])
+        detail_after_star = self.client.get(self.detail_url)
+        self.assertEqual(detail_after_star.data["star_count"], 2)
+        self.assertTrue(detail_after_star.data["is_starred"])
 
-        first_delete = self.client.delete(self.star_url)
-        second_delete = self.client.delete(self.star_url)
-        self.assertEqual(first_delete.status_code, 200)
-        self.assertEqual(second_delete.status_code, 200)
-        self.assertEqual(second_delete.data["star_count"], 1)
-        self.assertFalse(second_delete.data["is_starred"])
+        unstar_response = self.client.post(self.star_url)
+        self.assertEqual(unstar_response.status_code, 200)
+        self.assertEqual(unstar_response.data["star_count"], 1)
+        self.assertFalse(unstar_response.data["is_starred"])
         self.assertEqual(self.experience.starred_by.count(), 1)
 
-        detail_after_delete = self.client.get(self.detail_url)
-        self.assertEqual(detail_after_delete.data["star_count"], 1)
-        self.assertFalse(detail_after_delete.data["is_starred"])
+        detail_after_unstar = self.client.get(self.detail_url)
+        self.assertEqual(detail_after_unstar.data["star_count"], 1)
+        self.assertFalse(detail_after_unstar.data["is_starred"])
         self.assertTrue(
             self.experience.starred_by.filter(pk=other_user.pk).exists()
         )
+
+    def test_starred_usernames_are_not_exposed_in_any_experience_response(self):
+        self.experience.starred_by.add(self.user)
+        legacy_url = reverse("main:get_experience_json")
+
+        for user in (None, self.user):
+            with self.subTest(user=user):
+                self.client.force_authenticate(user=user)
+
+                list_response = self.client.get(self.list_url)
+                self.assertEqual(list_response.status_code, 200)
+                self.assertNotIn(
+                    "starred_by_names",
+                    list_response.data[0],
+                )
+                self.assertNotIn(self.user.username, str(list_response.data))
+
+                detail_response = self.client.get(self.detail_url)
+                self.assertEqual(detail_response.status_code, 200)
+                self.assertNotIn(
+                    "starred_by_names",
+                    detail_response.data,
+                )
+                self.assertNotIn(self.user.username, str(detail_response.data))
+
+                legacy_response = self.client.get(legacy_url)
+                self.assertEqual(legacy_response.status_code, 200)
+                self.assertNotIn(
+                    "starred_by_names",
+                    legacy_response.json()[0]["fields"],
+                )
+                self.assertNotIn(self.user.username, legacy_response.content.decode())
 
     def test_star_api_unknown_experience_returns_404(self):
         self.client.force_authenticate(user=self.user)
@@ -213,14 +239,14 @@ class ExperienceAPITests(TestCase):
             kwargs={"id": "00000000-0000-0000-0000-000000000099"},
         )
 
-        self.assertEqual(self.client.put(url).status_code, 404)
-        self.assertEqual(self.client.delete(url).status_code, 404)
+        self.assertEqual(self.client.post(url).status_code, 404)
 
     def test_star_api_rejects_other_methods(self):
         self.client.force_authenticate(user=self.user)
 
         self.assertEqual(self.client.get(self.star_url).status_code, 405)
-        self.assertEqual(self.client.post(self.star_url).status_code, 405)
+        self.assertEqual(self.client.put(self.star_url).status_code, 405)
+        self.assertEqual(self.client.delete(self.star_url).status_code, 405)
         self.assertEqual(
             self.client.patch(self.star_url, {"is_starred": True}).status_code,
             405,
@@ -232,27 +258,48 @@ class ExperienceAPITests(TestCase):
         csrf_token = page_response.cookies["csrftoken"].value
         self.assertTrue(csrf_client.login(username="regular", password="password"))
 
-        put_without_csrf = csrf_client.put(self.star_url)
-        self.assertEqual(put_without_csrf.status_code, 403)
+        post_without_csrf = csrf_client.post(self.star_url)
+        self.assertEqual(post_without_csrf.status_code, 403)
+        self.assertFalse(self.experience.starred_by.filter(pk=self.user.pk).exists())
 
-        put_with_csrf = csrf_client.put(
+        post_with_csrf = csrf_client.post(
             self.star_url,
             HTTP_X_CSRFTOKEN=csrf_token,
         )
-        self.assertEqual(put_with_csrf.status_code, 200)
+        self.assertEqual(post_with_csrf.status_code, 200)
+        self.assertTrue(self.experience.starred_by.filter(pk=self.user.pk).exists())
 
-        delete_without_csrf = csrf_client.delete(self.star_url)
-        self.assertEqual(delete_without_csrf.status_code, 403)
+        post_without_csrf = csrf_client.post(self.star_url)
+        self.assertEqual(post_without_csrf.status_code, 403)
 
-        delete_with_csrf = csrf_client.delete(
+        post_with_csrf = csrf_client.post(
             self.star_url,
             HTTP_X_CSRFTOKEN=csrf_token,
         )
-        self.assertEqual(delete_with_csrf.status_code, 200)
+        self.assertEqual(post_with_csrf.status_code, 200)
+        self.assertFalse(self.experience.starred_by.filter(pk=self.user.pk).exists())
 
     def test_non_uuid_path_does_not_match_detail_route(self):
-        response = self.client.get("/api/experience/not-a-uuid/")
+        response = self.client.get("/api/v1/experience/not-a-uuid/")
         self.assertEqual(response.status_code, 404)
+
+    def test_api_uses_v1_prefix_without_old_routes(self):
+        self.assertEqual(self.list_url, "/api/v1/experience/")
+        self.assertEqual(
+            self.detail_url,
+            f"/api/v1/experience/{self.experience.id}/",
+        )
+        self.assertEqual(
+            self.star_url,
+            f"/api/v1/experience/{self.experience.id}/star/",
+        )
+        for old_url in (
+            "/api/experience/",
+            f"/api/experience/{self.experience.id}/",
+            f"/api/experience/{self.experience.id}/star/",
+        ):
+            with self.subTest(url=old_url):
+                self.assertEqual(self.client.get(old_url).status_code, 404)
 
     def test_session_authentication_requires_csrf_for_updates(self):
         csrf_client = APIClient(enforce_csrf_checks=True)

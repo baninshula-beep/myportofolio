@@ -13,9 +13,55 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
 
 # Load environment variables from .env file
 load_dotenv()
+
+
+def _parse_boolean_setting(name, value):
+    normalized_value = value.strip().lower()
+
+    if normalized_value in {"true", "1", "yes", "on"}:
+        return True
+
+    if normalized_value in {"false", "0", "no", "off"}:
+        return False
+
+    raise ImproperlyConfigured(
+        f"{name} must be a valid boolean (true/false, 1/0, yes/no, on/off)."
+    )
+
+
+def _load_security_settings(environ):
+    """Resolve security-sensitive settings from an environment mapping."""
+    production_value = environ.get("PRODUCTION")
+    if production_value is None or not production_value.strip():
+        raise ImproperlyConfigured(
+            "PRODUCTION must be explicitly set to a valid boolean value."
+        )
+
+    production = _parse_boolean_setting("PRODUCTION", production_value)
+    secret_key = environ.get("SECRET_KEY")
+
+    if secret_key is None or not secret_key.strip():
+        if production:
+            raise ImproperlyConfigured(
+                "SECRET_KEY must be configured in the environment when PRODUCTION is enabled."
+            )
+        secret_key = get_random_secret_key()
+
+    debug_value = environ.get("DEBUG")
+    requested_debug = (
+        _parse_boolean_setting("DEBUG", debug_value)
+        if debug_value is not None
+        else True
+    )
+    return production, secret_key, requested_debug and not production
+
+
+PRODUCTION, SECRET_KEY, DEBUG = _load_security_settings(os.environ)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,18 +71,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^lv7mw9&rj8@xhd)94$6rdji=@z#vd(&%j5tc*!6g!s7%cm_nq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "banin-shula-myportofolio.pws.cs.ui.ac.id"
 ]
 
-PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
 CSRF_TRUSTED_ORIGINS = [
     "https://banin-shula-myportofolio.pws.cs.ui.ac.id",

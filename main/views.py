@@ -161,11 +161,6 @@ def get_experience_json(request):
             else False
         )
 
-        starred_by_names = ", ".join(
-            user.username
-            for user in starred_users
-        )
-
         data.append({
             "pk": str(experience.id),
             "fields": {
@@ -190,7 +185,6 @@ def get_experience_json(request):
                 ),
                 "star_count": starred_users.count(),
                 "is_starred": is_starred,
-                "starred_by_names": starred_by_names,
             },
         })
 

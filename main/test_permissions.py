@@ -29,7 +29,7 @@ class ExperiencePermissionTests(TestCase):
         )
 
     def permission_result(self, role, method):
-        request = getattr(self.factory, method.lower())("/api/experience/")
+        request = getattr(self.factory, method.lower())("/api/v1/experience/")
         request.user = role
         return self.permission.has_permission(request, view=None)
 
@@ -69,9 +69,9 @@ class ExperiencePermissionTests(TestCase):
 
     def test_star_permission_is_authenticated_only(self):
         star_permission = IsAuthenticated()
-        guest_request = self.factory.post("/api/experience/star/")
+        guest_request = self.factory.post("/api/v1/experience/star/")
         guest_request.user = self.guest
-        user_request = self.factory.post("/api/experience/star/")
+        user_request = self.factory.post("/api/v1/experience/star/")
         user_request.user = self.user
 
         self.assertFalse(star_permission.has_permission(guest_request, None))
