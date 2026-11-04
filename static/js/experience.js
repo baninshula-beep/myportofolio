@@ -110,6 +110,11 @@ function buildExperienceCard(experience) {
         pk
     );
 
+    const starApiUrl = buildExperienceUrl(
+        experienceConfig.starApiUrl,
+        pk
+    );
+
     const modalId = `delete-experience-${pk}`;
     const modalTitleId = `delete-experience-title-${pk}`;
 
@@ -240,6 +245,41 @@ function buildExperienceCard(experience) {
         ? "★ Unstar"
         : "☆ Star";
 
+    const starControl = experienceConfig.isAuthenticated
+        ? `
+            <form
+                method="post"
+                action="${starUrl}"
+                class="experience-star-form"
+                data-api-url="${escapeHtml(starApiUrl)}"
+            >
+                <input
+                    type="hidden"
+                    name="csrfmiddlewaretoken"
+                    value="${escapeHtml(CSRF_TOKEN)}"
+                >
+
+                <button
+                    type="submit"
+                    class="button"
+                    data-star-button
+                    aria-pressed="${fields.is_starred}"
+                >
+                    ${starLabel}
+                    (${fields.star_count})
+                </button>
+
+            </form>
+        `
+        : `
+            <a
+                href="${escapeHtml(experienceConfig.loginUrl)}"
+                class="button"
+            >
+                Login untuk memberi Star (${fields.star_count})
+            </a>
+        `;
+
     return `
         <article class="experience-card">
 
@@ -271,25 +311,7 @@ function buildExperienceCard(experience) {
 
                     ${deleteButton}
 
-                    <form
-                        method="post"
-                        action="${starUrl}"
-                    >
-                        <input
-                            type="hidden"
-                            name="csrfmiddlewaretoken"
-                            value="${escapeHtml(CSRF_TOKEN)}"
-                        >
-
-                        <button
-                            type="submit"
-                            class="button"
-                        >
-                            ${starLabel}
-                            (${fields.star_count})
-                        </button>
-
-                    </form>
+                    ${starControl}
 
                 </div>
 
@@ -394,7 +416,7 @@ async function fetchExperiences(query = "") {
  * Mengambil nilai cookie berdasarkan nama cookie.
  *
  * Cookie csrftoken digunakan sebagai header
- * X-CSRFToken untuk request POST melalui Fetch API.
+ * X-CSRFToken untuk request yang mengubah data melalui Fetch API.
  */
 function getCookie(name) {
     const cookies = document.cookie.split(";");
@@ -410,6 +432,86 @@ function getCookie(name) {
     }
 
     return null;
+}
+
+
+/*
+ * Mengirim perubahan Star melalui API. PUT dan DELETE menetapkan
+ * state tujuan agar request ulang tidak membalik status Star.
+ */
+async function updateExperienceStar(event) {
+    const starForm = event.target.closest(
+        ".experience-star-form"
+    );
+
+    if (!starForm || !gridContainer.contains(starForm)) {
+        return;
+    }
+
+    event.preventDefault();
+
+    if (starForm.dataset.pending === "true") {
+        return;
+    }
+
+    const button = starForm.querySelector("[data-star-button]");
+
+    if (!button) {
+        return;
+    }
+
+    const isCurrentlyStarred = button.getAttribute("aria-pressed") === "true";
+    const method = isCurrentlyStarred ? "DELETE" : "PUT";
+    const csrfToken = getCookie("csrftoken") || CSRF_TOKEN;
+
+    starForm.dataset.pending = "true";
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+
+    try {
+        const response = await fetch(
+            starForm.dataset.apiUrl,
+            {
+                method,
+                credentials: "same-origin",
+                headers: {
+                    "Accept": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+            }
+        );
+
+        if (!response.ok) {
+            const result = await response
+                .json()
+                .catch(() => ({}));
+
+            throw new Error(
+                response.status === 403
+                    ? "Sesi login atau token keamanan tidak valid. Silakan login kembali."
+                    : result.detail || "Star tidak dapat diperbarui. Silakan coba lagi."
+            );
+        }
+
+        await fetchExperiences(
+            searchInput
+                ? searchInput.value.trim()
+                : ""
+        );
+
+    } catch (error) {
+        console.error("Failed to update experience star:", error);
+        showToast(
+            "Gagal memperbarui Star",
+            error.message || "Terjadi kesalahan saat menghubungi server.",
+            "error"
+        );
+
+    } finally {
+        starForm.dataset.pending = "false";
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+    }
 }
 
 
@@ -607,6 +709,14 @@ if (searchForm) {
                 searchInput.value.trim()
             );
         }
+    );
+}
+
+
+if (gridContainer) {
+    gridContainer.addEventListener(
+        "submit",
+        updateExperienceStar
     );
 }
 

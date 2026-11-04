@@ -2,6 +2,7 @@ from django.urls import path
 from main.api_views import (
     ExperienceDetailAPIView,
     ExperienceListCreateAPIView,
+    ExperienceStarAPIView,
 )
 
 from main.views import (
@@ -103,6 +104,12 @@ urlpatterns = [
         "api/experience/<uuid:id>/",
         ExperienceDetailAPIView.as_view(),
         name="api_experience_detail",
+    ),
+
+    path(
+        "api/experience/<uuid:id>/star/",
+        ExperienceStarAPIView.as_view(),
+        name="api_experience_star",
     ),
 
     # =========================

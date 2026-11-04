@@ -104,6 +104,12 @@
 
         starUrl: "{% url 'main:toggle_star' '00000000-0000-0000-0000-000000000000' %}",
 
+        starApiUrl: "{% url 'main:api_experience_star' '00000000-0000-0000-0000-000000000000' %}",
+
+        loginUrl: "{% url 'main:login' %}",
+
+        isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }},
+
         isSuperuser: {{ user.is_superuser|yesno:"true,false" }},
 
         isEditor: {{ is_editor|yesno:"true,false" }}

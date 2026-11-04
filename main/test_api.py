@@ -39,6 +39,10 @@ class ExperienceAPITests(TestCase):
             "main:api_experience_detail",
             kwargs={"id": self.experience.id},
         )
+        self.star_url = reverse(
+            "main:api_experience_star",
+            kwargs={"id": self.experience.id},
+        )
 
     def valid_payload(self, **overrides):
         payload = {
@@ -138,6 +142,113 @@ class ExperienceAPITests(TestCase):
             kwargs={"id": "00000000-0000-0000-0000-000000000099"},
         )
         self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_guest_cannot_put_or_delete_star(self):
+        self.client.force_authenticate(user=None)
+
+        put_response = self.client.put(self.star_url)
+        delete_response = self.client.delete(self.star_url)
+
+        self.assertEqual(put_response.status_code, 403)
+        self.assertEqual(delete_response.status_code, 403)
+        self.assertFalse(self.experience.starred_by.exists())
+
+    def test_authenticated_non_editor_can_put_and_delete_star(self):
+        self.assertFalse(self.user.groups.filter(name="Editor").exists())
+        self.client.force_authenticate(user=self.user)
+
+        put_response = self.client.put(self.star_url)
+        self.assertEqual(put_response.status_code, 200)
+        self.assertEqual(
+            put_response.data,
+            {"star_count": 1, "is_starred": True},
+        )
+
+        delete_response = self.client.delete(self.star_url)
+        self.assertEqual(delete_response.status_code, 200)
+        self.assertEqual(
+            delete_response.data,
+            {"star_count": 0, "is_starred": False},
+        )
+
+    def test_star_operations_are_idempotent_and_report_user_state(self):
+        other_user = User.objects.create_user(
+            "another-user",
+            password="password",
+        )
+        self.experience.starred_by.add(other_user)
+        self.client.force_authenticate(user=self.user)
+
+        first_put = self.client.put(self.star_url)
+        second_put = self.client.put(self.star_url)
+        self.assertEqual(first_put.status_code, 200)
+        self.assertEqual(second_put.status_code, 200)
+        self.assertEqual(second_put.data["star_count"], 2)
+        self.assertTrue(second_put.data["is_starred"])
+        self.assertEqual(self.experience.starred_by.count(), 2)
+
+        detail_after_put = self.client.get(self.detail_url)
+        self.assertEqual(detail_after_put.data["star_count"], 2)
+        self.assertTrue(detail_after_put.data["is_starred"])
+
+        first_delete = self.client.delete(self.star_url)
+        second_delete = self.client.delete(self.star_url)
+        self.assertEqual(first_delete.status_code, 200)
+        self.assertEqual(second_delete.status_code, 200)
+        self.assertEqual(second_delete.data["star_count"], 1)
+        self.assertFalse(second_delete.data["is_starred"])
+        self.assertEqual(self.experience.starred_by.count(), 1)
+
+        detail_after_delete = self.client.get(self.detail_url)
+        self.assertEqual(detail_after_delete.data["star_count"], 1)
+        self.assertFalse(detail_after_delete.data["is_starred"])
+        self.assertTrue(
+            self.experience.starred_by.filter(pk=other_user.pk).exists()
+        )
+
+    def test_star_api_unknown_experience_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse(
+            "main:api_experience_star",
+            kwargs={"id": "00000000-0000-0000-0000-000000000099"},
+        )
+
+        self.assertEqual(self.client.put(url).status_code, 404)
+        self.assertEqual(self.client.delete(url).status_code, 404)
+
+    def test_star_api_rejects_other_methods(self):
+        self.client.force_authenticate(user=self.user)
+
+        self.assertEqual(self.client.get(self.star_url).status_code, 405)
+        self.assertEqual(self.client.post(self.star_url).status_code, 405)
+        self.assertEqual(
+            self.client.patch(self.star_url, {"is_starred": True}).status_code,
+            405,
+        )
+
+    def test_star_session_authentication_requires_csrf(self):
+        csrf_client = APIClient(enforce_csrf_checks=True)
+        page_response = csrf_client.get(reverse("main:show_experience"))
+        csrf_token = page_response.cookies["csrftoken"].value
+        self.assertTrue(csrf_client.login(username="regular", password="password"))
+
+        put_without_csrf = csrf_client.put(self.star_url)
+        self.assertEqual(put_without_csrf.status_code, 403)
+
+        put_with_csrf = csrf_client.put(
+            self.star_url,
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(put_with_csrf.status_code, 200)
+
+        delete_without_csrf = csrf_client.delete(self.star_url)
+        self.assertEqual(delete_without_csrf.status_code, 403)
+
+        delete_with_csrf = csrf_client.delete(
+            self.star_url,
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertEqual(delete_with_csrf.status_code, 200)
 
     def test_non_uuid_path_does_not_match_detail_route(self):
         response = self.client.get("/api/experience/not-a-uuid/")
