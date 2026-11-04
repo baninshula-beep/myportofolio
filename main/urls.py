@@ -1,4 +1,8 @@
 from django.urls import path
+from main.api_views import (
+    ExperienceDetailAPIView,
+    ExperienceListCreateAPIView,
+)
 
 from main.views import (
     show_main,
@@ -81,13 +85,25 @@ urlpatterns = [
     ),
 
     path(
-        "api/experience/",
+        "experience/data/",
         get_experience_json,
         name="get_experience_json"
     ),
 
     # Endpoint JSON menyediakan data portfolio yang akan dirender
     # secara dinamis oleh JavaScript.
+
+    path(
+        "api/experience/",
+        ExperienceListCreateAPIView.as_view(),
+        name="api_experience_list_create",
+    ),
+
+    path(
+        "api/experience/<uuid:id>/",
+        ExperienceDetailAPIView.as_view(),
+        name="api_experience_detail",
+    ),
 
     # =========================
     # EDUCATION
