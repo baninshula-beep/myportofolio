@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from main.api_views import (
     ExperienceDetailAPIView,
     ExperienceListCreateAPIView,
@@ -93,6 +93,11 @@ urlpatterns = [
 
     # Endpoint JSON menyediakan data portfolio yang akan dirender
     # secara dinamis oleh JavaScript.
+
+    path(
+        "api/v1/",
+        include("main.api_urls"),
+    ),
 
     path(
         "api/v1/experience/",

@@ -56,6 +56,11 @@ class Education(models.Model):
         null=True,
         blank=True
     )
+    starred_by = models.ManyToManyField(
+        User,
+        related_name="starred_educations",
+        blank=True
+    )
 
     def __str__(self):
         return self.institution

@@ -19,3 +19,24 @@ class ExperiencePermission(BasePermission):
             request.method in ("PUT", "PATCH")
             and user.groups.filter(name="Editor").exists()
         )
+
+
+class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
+    """Allow public reads, Editor changes, and full owner access for Education."""
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        if request.method in SAFE_METHODS:
+            return True
+
+        if not user.is_authenticated:
+            return False
+
+        if user.is_superuser:
+            return True
+
+        return (
+            request.method in ("PUT", "PATCH")
+            and user.groups.filter(name="Editor").exists()
+        )

@@ -3,7 +3,10 @@ from django.test import TestCase
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.test import APIRequestFactory
 
-from main.permissions import ExperiencePermission
+from main.permissions import (
+    ExperiencePermission,
+    IsPortfolioOwnerOrEditorOrReadOnly,
+)
 
 
 class ExperiencePermissionTests(TestCase):
@@ -76,3 +79,65 @@ class ExperiencePermissionTests(TestCase):
 
         self.assertFalse(star_permission.has_permission(guest_request, None))
         self.assertTrue(star_permission.has_permission(user_request, None))
+
+
+class EducationPermissionTests(TestCase):
+    methods = ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE")
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.permission = IsPortfolioOwnerOrEditorOrReadOnly()
+        self.guest = AnonymousUser()
+        self.user = User.objects.create_user(
+            username="education-regular",
+            password="password",
+        )
+        self.editor = User.objects.create_user(
+            username="education-editor",
+            password="password",
+        )
+        editor_group, _ = Group.objects.get_or_create(name="Editor")
+        self.editor.groups.add(editor_group)
+        self.superuser = User.objects.create_superuser(
+            username="education-admin",
+            password="password",
+        )
+
+    def permission_result(self, role, method):
+        request = getattr(self.factory, method.lower())(
+            "/api/v1/education/"
+        )
+        request.user = role
+        return self.permission.has_permission(request, view=None)
+
+    def assert_access_matrix(self, role, allowed_methods):
+        for method in self.methods:
+            with self.subTest(role=role, method=method):
+                self.assertEqual(
+                    self.permission_result(role, method),
+                    method in allowed_methods,
+                )
+
+    def test_anonymous_user_can_only_read(self):
+        self.assert_access_matrix(
+            self.guest,
+            {"GET", "HEAD", "OPTIONS"},
+        )
+
+    def test_normal_user_can_only_read_through_education_permission(self):
+        self.assert_access_matrix(
+            self.user,
+            {"GET", "HEAD", "OPTIONS"},
+        )
+
+    def test_editor_can_read_and_update(self):
+        self.assert_access_matrix(
+            self.editor,
+            {"GET", "HEAD", "OPTIONS", "PUT", "PATCH"},
+        )
+
+    def test_superuser_has_full_crud_access(self):
+        self.assert_access_matrix(
+            self.superuser,
+            set(self.methods),
+        )

@@ -1,14 +1,17 @@
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from rest_framework import status
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.views import APIView
 
-from main.models import Experience
-from main.permissions import ExperiencePermission
-from main.serializers import ExperienceSerializer
+from main.models import Education, Experience
+from main.permissions import ExperiencePermission, IsPortfolioOwnerOrEditorOrReadOnly
+from main.serializers import EducationSerializer, ExperienceSerializer
 
 
 class ExperienceListCreateAPIView(ListCreateAPIView):
@@ -54,3 +57,90 @@ class ExperienceStarAPIView(APIView):
             "star_count": star_count,
             "is_starred": is_starred,
         })
+
+
+@api_view(["GET", "POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def education_list_create(request):
+    """List/search Education records or create one for the portfolio owner."""
+    if request.method == "GET":
+        educations = Education.objects.prefetch_related("starred_by").all()
+        institution = request.query_params.get("institution", "").strip()
+        if institution:
+            educations = educations.filter(
+                institution__icontains=institution
+            )
+
+        serializer = EducationSerializer(
+            educations,
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    serializer = EducationSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET", "PUT", "PATCH", "DELETE"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
+def education_detail(request, education_id):
+    """Retrieve, update, or delete one Education record."""
+    education = get_object_or_404(
+        Education.objects.prefetch_related("starred_by"),
+        pk=education_id,
+    )
+
+    if request.method == "GET":
+        serializer = EducationSerializer(
+            education,
+            context={"request": request},
+        )
+        return Response(serializer.data)
+
+    if request.method == "DELETE":
+        education.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    serializer = EducationSerializer(
+        education,
+        data=request.data,
+        partial=request.method == "PATCH",
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data)
+
+
+@api_view(["POST"])
+@authentication_classes([SessionAuthentication])
+@permission_classes([IsAuthenticated])
+def education_star(request, education_id):
+    """Toggle the authenticated user's star on an Education record."""
+    with transaction.atomic():
+        education = get_object_or_404(
+            Education.objects.select_for_update(),
+            pk=education_id,
+        )
+        relation = education.starred_by
+        if relation.filter(pk=request.user.pk).exists():
+            relation.remove(request.user)
+            is_starred = False
+        else:
+            relation.add(request.user)
+            is_starred = True
+
+        star_count = relation.count()
+
+    return Response({
+        "star_count": star_count,
+        "is_starred": is_starred,
+    })
