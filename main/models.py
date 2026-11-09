@@ -47,6 +47,8 @@ class Experience(models.Model):
         return self.ended_at is None
 
 class Education(models.Model):
+    """A portfolio education entry that users can independently star."""
+
     # Menyimpan informasi pendidikan yang ditampilkan pada halaman Education.
     institution = models.CharField(max_length=100)
     degree = models.CharField(max_length=100)
@@ -56,6 +58,8 @@ class Education(models.Model):
         null=True,
         blank=True
     )
+    # A user may star many entries; the reverse name supports looking up that
+    # user's starred education entries through ``user.starred_educations``.
     starred_by = models.ManyToManyField(
         User,
         related_name="starred_educations",

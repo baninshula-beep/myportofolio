@@ -379,6 +379,8 @@ class ExperienceAPITests(TestCase):
 
 
 class EducationAPITests(APITestCase):
+    """Exercise Education API behavior across roles and authentication paths."""
+
     def setUp(self):
         self.client = APIClient()
         self.visitor = AnonymousUser()
@@ -754,6 +756,8 @@ class EducationAPITests(APITestCase):
         )
 
     def test_session_mutations_require_csrf_token(self):
+        # Use a real session login with CSRF enforcement: force_authenticate
+        # bypasses middleware/authentication checks and cannot prove CSRF works.
         csrf_client = APIClient(enforce_csrf_checks=True)
         self.assertTrue(
             csrf_client.login(

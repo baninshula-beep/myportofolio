@@ -82,6 +82,8 @@ class ExperiencePermissionTests(TestCase):
 
 
 class EducationPermissionTests(TestCase):
+    """Verify the Education permission's role-by-method access matrix."""
+
     methods = ("GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE")
 
     def setUp(self):

@@ -1,3 +1,5 @@
+"""Education API routes, included beneath the project's ``/api/v1/`` prefix."""
+
 from django.urls import path
 
 from main.api_views import (

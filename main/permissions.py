@@ -22,7 +22,11 @@ class ExperiencePermission(BasePermission):
 
 
 class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
-    """Allow public reads, Editor changes, and full owner access for Education."""
+    """Allow public reads, Editor updates, and full superuser CRUD access.
+
+    Star access is checked separately by the dedicated authenticated endpoint,
+    so it does not grant users permission to modify Education fields.
+    """
 
     def has_permission(self, request, view):
         user = request.user

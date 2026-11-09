@@ -129,3 +129,80 @@ Percakapan tersebut mendokumentasikan proses pengerjaan secara bertahap, mulai d
 
 **Prompting approach:**
 Saya memberikan requirement tugas dan kondisi kode terbaru kepada AI, kemudian meminta AI melakukan audit terhadap implementasi yang sudah ada sebelum perubahan diterapkan. Proses dilakukan secara bertahap berdasarkan milestone. Setiap perubahan diverifikasi melalui automated testing dan/atau browser testing sebelum melanjutkan ke tahap berikutnya. Ketika ditemukan error atau ketidaksesuaian, hasil testing digunakan sebagai dasar untuk menentukan perubahan berikutnya.
+
+**### Tugas 6**
+
+1. REST (Representational State Transfer) merupakan gaya arsitektur yang digunakan untuk mengatur komunikasi antara client dan server melalui resource. Dalam REST, setiap resource memiliki identitas berupa URI dan dapat diakses atau dimanipulasi menggunakan HTTP method yang sesuai. REST juga menerapkan prinsip seperti pemisahan client dan server, komunikasi yang stateless, serta penggunaan interface yang konsisten.
+
+   Mengembalikan data dalam format JSON saja belum cukup untuk menyebut sebuah API sebagai RESTful. JSON hanya merupakan format representasi data, sedangkan REST mengatur bagaimana resource diidentifikasi dan bagaimana client berkomunikasi dengan server. Sebuah API perlu menerapkan prinsip REST, misalnya menggunakan URI untuk mengidentifikasi resource, HTTP method sesuai dengan operasi yang dilakukan, serta status code yang menggambarkan hasil request.
+
+   Pada implementasi ini, Education API menggunakan endpoint `/api/v1/education/` untuk mengakses daftar data pendidikan dan `/api/v1/education/<id>/` untuk mengakses data pendidikan tertentu. API menggunakan `GET` untuk membaca data, `POST` untuk membuat data baru, `PUT` dan `PATCH` untuk memperbarui data, serta `DELETE` untuk menghapus data.
+
+   `PUT` dan `PATCH` sama-sama digunakan untuk memperbarui resource, tetapi memiliki perbedaan pada cakupan perubahan datanya. `PUT` digunakan untuk memperbarui representasi resource secara keseluruhan, sehingga client perlu mengirimkan seluruh field yang diperlukan. Sementara itu, `PATCH` digunakan untuk memperbarui sebagian field saja tanpa harus mengirimkan seluruh data.
+
+   Sebagai contoh, ketika Editor ingin memperbarui seluruh informasi pendidikan, seperti institusi, gelar, tahun pendidikan, dan tahun kelulusan, Editor dapat menggunakan `PUT`. Namun, jika Editor hanya ingin mengubah nama gelar tanpa mengubah informasi lainnya, `PATCH` lebih sesuai karena hanya field `degree` yang perlu dikirimkan. Pada Education API yang saya implementasikan, `PATCH` menggunakan parameter `partial=True` pada serializer sehingga field lain yang tidak dikirimkan tidak wajib disertakan.
+
+2. Serializer pada Django REST Framework berfungsi untuk mengubah data dari model Django menjadi representasi yang dapat dikirim melalui API, seperti JSON. Serializer juga menangani proses validasi dan deserialisasi data yang diterima dari client sebelum data tersebut digunakan untuk membuat atau memperbarui object pada database.
+
+   Pada implementasi ini, saya menggunakan `EducationSerializer` yang dibuat berdasarkan `ModelSerializer`. Field yang digunakan ditentukan secara eksplisit, yaitu `id`, `institution`, `degree`, `year`, `graduation_year`, `star_count`, dan `is_starred`. Selain itu, serializer juga menangani validasi input, termasuk membersihkan tag HTML pada field teks menggunakan `strip_tags` dan memastikan hasil input tidak kosong.
+
+   Keuntungan menggunakan serializer dibandingkan merakit dictionary secara manual dengan `JsonResponse` seperti pada Tutorial 05 adalah proses konversi data, validasi, dan penyimpanan menjadi lebih terstruktur dan terintegrasi dengan model. Jika menggunakan dictionary secara manual, developer perlu menentukan sendiri setiap field yang akan dikirim dan menangani validasi input secara terpisah. Sementara itu, serializer menyediakan mekanisme yang lebih terorganisasi melalui `.data`, `.is_valid()`, dan `.save()`.
+
+   Dengan menggunakan serializer, struktur representasi data juga lebih mudah dipelihara karena field dan aturan validasinya dikelola dalam satu tempat. Pada Education API, serializer juga digunakan untuk menghasilkan informasi tambahan seperti jumlah star dan status apakah pengguna yang sedang login sudah memberikan star pada suatu data Education.
+
+3. Autentikasi dan otorisasi merupakan dua konsep yang berbeda dalam Django REST Framework. Autentikasi merupakan proses untuk mengidentifikasi pengguna yang melakukan request, misalnya dengan memeriksa session pengguna yang sedang login. Sementara itu, otorisasi merupakan proses untuk menentukan apakah pengguna tersebut memiliki hak akses untuk melakukan suatu tindakan berdasarkan identitas dan role yang dimilikinya.
+
+   Pada implementasi Education API, autentikasi dilakukan menggunakan `SessionAuthentication`, sedangkan otorisasi diatur menggunakan permission class `IsPortfolioOwnerOrEditorOrReadOnly`. Permission tersebut menentukan hak akses berdasarkan role pengguna. Visitor dapat melihat data Education, Normal User dapat melihat serta melakukan star dan unstar, Editor dapat melihat, melakukan star, serta memperbarui data, sedangkan Superuser memiliki akses penuh untuk melakukan operasi CRUD dan star.
+
+   Pemeriksaan hak akses harus dilakukan pada server melalui permission class karena menyembunyikan tombol pada template hanya membatasi tampilan antarmuka, bukan benar-benar melindungi API. Pengguna masih dapat mengirimkan HTTP request secara langsung melalui browser Developer Tools, Postman, atau tools lainnya tanpa menggunakan tombol pada halaman website. Jika pembatasan hanya dilakukan pada frontend, pengguna yang tidak memiliki izin masih berpotensi mengakses endpoint secara langsung.
+
+   Dengan menerapkan permission class pada server, setiap request tetap diperiksa berdasarkan hak akses pengguna sebelum operasi dijalankan. Dengan demikian, keamanan API tidak hanya bergantung pada tampilan frontend, tetapi juga pada aturan akses yang diterapkan di sisi server.
+
+4. Request yang mengubah data tetap memerlukan token CSRF ketika API menggunakan `SessionAuthentication` karena autentikasi berbasis session memanfaatkan cookie yang disimpan oleh browser. Browser dapat mengirimkan cookie session secara otomatis ketika melakukan request ke website yang bersangkutan. Kondisi ini dapat dimanfaatkan dalam serangan Cross-Site Request Forgery (CSRF), yaitu ketika pengguna yang sudah login tanpa sadar diarahkan untuk mengirimkan request yang tidak diinginkan.
+
+   Token CSRF digunakan untuk memastikan bahwa request yang mengubah data berasal dari halaman aplikasi yang sah. Pada implementasi Education API, token CSRF dikirimkan melalui header `X-CSRFToken` pada setiap request yang melakukan perubahan data, seperti `POST`, `PATCH`, `PUT`, dan `DELETE`. Dengan demikian, server dapat memeriksa token tersebut sebelum memproses request.
+
+   Pengujian menggunakan `force_authenticate` saja tidak cukup untuk membuktikan bahwa perlindungan CSRF berjalan karena metode tersebut secara langsung menetapkan pengguna yang terautentikasi pada request untuk keperluan testing. Proses tersebut melewati mekanisme autentikasi session normal sehingga tidak menguji pengiriman cookie session dan pemeriksaan CSRF sebagaimana yang terjadi pada request dari browser.
+
+   Oleh karena itu, pada pengujian CSRF Education API, saya menggunakan `APIClient(enforce_csrf_checks=True)` dan melakukan login menggunakan session. Setelah memperoleh token CSRF, saya menguji request perubahan data tanpa token dan memastikan request ditolak. Saya juga menguji request dengan token yang valid untuk memastikan operasi yang diizinkan dapat berhasil. Dengan cara tersebut, pengujian dapat membuktikan bahwa perlindungan CSRF benar-benar berjalan pada mekanisme autentikasi session.
+
+**### AI Disclosure Tugas 6**
+
+Dalam pengerjaan Tugas 6, saya menggunakan **ChatGPT dan Codex** sebagai AI assistant dengan peran yang berbeda. ChatGPT saya gunakan untuk membantu memahami konsep Django REST Framework, menganalisis requirement tugas, menyusun tahapan implementasi, melakukan code review, debugging, serta menyusun dokumentasi. Sementara itu, Codex saya gunakan untuk membantu mengimplementasikan perubahan secara langsung pada repository project dan memeriksa hasil implementasinya.
+
+Beberapa bagian yang dibantu oleh AI meliputi:
+
+* Menganalisis requirement Tugas 6 dan menentukan model `Education` sebagai model yang digunakan untuk implementasi REST API.
+* Membantu memahami konsep REST, HTTP method, serializer, autentikasi, otorisasi, permission class, dan CSRF protection.
+* Membantu merancang struktur REST API, termasuk endpoint, serializer, permission, API views, dan URL routing.
+* Membantu mengimplementasikan fitur star menggunakan relasi ManyToMany antara model `Education` dan pengguna.
+* Membantu mengintegrasikan frontend halaman Education dengan REST API, termasuk fitur search, create, edit, star, dan delete tanpa reload halaman.
+* Membantu menyusun serta memeriksa automated tests untuk menguji akses berdasarkan role, validasi data, operasi CRUD, fitur star, dan perlindungan CSRF.
+* Membantu melakukan audit terhadap komentar dan docstring agar kode lebih mudah dipahami dan dipelihara.
+* Membantu menyusun jawaban refleksi dan dokumentasi pengerjaan Tugas 6.
+
+**#### AI Limitations and Manual Improvements**
+
+Saya menyadari bahwa AI tidak selalu mengetahui kondisi terbaru dari repository dan tidak dapat langsung mengasumsikan bahwa struktur project sesuai dengan contoh umum Django. Karena itu, implementasi dilakukan dengan tetap mempertahankan struktur dan fitur yang sudah ada, khususnya REST API Experience dari Tutorial 07 dan halaman Education yang telah dibuat pada tugas sebelumnya.
+
+Salah satu hal yang perlu diperhatikan selama pengerjaan adalah bahwa implementasi frontend dan backend harus memiliki aturan akses yang konsisten. Tombol yang ditampilkan pada frontend tidak dapat dijadikan satu-satunya mekanisme pembatasan akses. Oleh karena itu, permission tetap diperiksa pada server untuk memastikan setiap pengguna hanya dapat melakukan tindakan sesuai dengan role-nya.
+
+Selain itu, pada proses integrasi fitur search, ditemukan kemungkinan hasil request yang lebih lama ditampilkan setelah pengguna melakukan pencarian baru. Hal tersebut diperbaiki dengan menggunakan penanda urutan request sehingga hanya hasil dari request terbaru yang digunakan. Perbaikan ini dilakukan agar hasil pencarian tetap sesuai dengan input terakhir pengguna.
+
+Setiap perubahan dari AI tetap diperiksa dengan membandingkannya terhadap requirement tugas dan kode project yang sebenarnya. Saya juga melakukan pengujian menggunakan automated tests dan browser testing untuk memeriksa perilaku aplikasi dari sisi pengguna. Pengujian tersebut mencakup hak akses Visitor, Normal User, Editor, dan Superuser, serta memastikan fitur-fitur pada Tutorial 07 tetap berfungsi.
+
+Dengan demikian, AI digunakan sebagai alat bantu untuk memahami konsep, mempercepat proses implementasi, dan membantu menemukan masalah. Keputusan akhir mengenai perubahan kode, kesesuaian requirement, dan hasil pengujian tetap didasarkan pada pemeriksaan terhadap project yang dikerjakan.
+
+**#### AI Working Log / Prompting Log**
+
+Dokumentasi percakapan yang digunakan sebagai AI working log dan prompting log selama pengerjaan Tugas 6 dapat diakses melalui:
+
+https://chatgpt.com/share/6af1df66-6bd8-83ec-a9f2-68864ecf120a
+
+Proses pengerjaan dilakukan secara bertahap, mulai dari memahami requirement, menentukan rancangan REST API, mengimplementasikan backend, mengintegrasikan frontend, melakukan testing, hingga menyempurnakan komentar dan dokumentasi.
+
+**Prompting approach:**
+
+Saya memberikan konteks project, requirement tugas, struktur file, serta kondisi implementasi terbaru kepada AI sebelum meminta bantuan. Saya menggunakan pendekatan bertahap dengan memisahkan pembahasan konsep, perencanaan implementasi, code review, dan debugging. Untuk perubahan kode yang dilakukan menggunakan Codex, saya memberikan instruksi yang spesifik mengenai file yang boleh diubah, fitur yang harus dipertahankan, serta batasan perubahan agar implementasi tidak merusak fitur sebelumnya.
+
+Setelah perubahan dilakukan, saya memeriksa hasilnya melalui code review, automated tests, dan browser testing. Ketika ditemukan error atau ketidaksesuaian, saya memberikan hasil error atau testing tersebut sebagai konteks untuk proses debugging berikutnya. Dengan pendekatan ini, penggunaan AI tetap terarah dan setiap hasil implementasi diverifikasi berdasarkan kondisi project yang sebenarnya.

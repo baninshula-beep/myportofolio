@@ -81,7 +81,11 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
 
 class EducationSerializer(serializers.ModelSerializer):
-    """Serialize Education fields and the requesting user's star state."""
+    """Serialize Education data, including calculated star state.
+
+    Star status is calculated for the request user from serializer context;
+    both calculated fields are output-only and cannot be set by API clients.
+    """
 
     star_count = serializers.SerializerMethodField()
     is_starred = serializers.SerializerMethodField()
@@ -127,6 +131,8 @@ class EducationSerializer(serializers.ModelSerializer):
         return obj.starred_by.all().count()
 
     def get_is_starred(self, obj):
+        # The request context lets the same public representation report each
+        # authenticated viewer's own relationship without exposing user data.
         request = self.context.get("request")
         user = getattr(request, "user", None)
         if not getattr(user, "is_authenticated", False):

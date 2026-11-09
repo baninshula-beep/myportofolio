@@ -94,6 +94,8 @@ urlpatterns = [
     # Endpoint JSON menyediakan data portfolio yang akan dirender
     # secara dinamis oleh JavaScript.
 
+    # Mount the Education URLconf under the shared version prefix; the
+    # Tutorial 07 Experience API routes remain registered explicitly below.
     path(
         "api/v1/",
         include("main.api_urls"),

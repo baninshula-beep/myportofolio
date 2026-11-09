@@ -63,8 +63,10 @@ class ExperienceStarAPIView(APIView):
 @authentication_classes([SessionAuthentication])
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def education_list_create(request):
-    """List/search Education records or create one for the portfolio owner."""
+    """List/search Education records or create one for a superuser."""
     if request.method == "GET":
+        # The serializer reads starred_by for each result; prefetching avoids
+        # issuing an additional relation query for every Education row.
         educations = Education.objects.prefetch_related("starred_by").all()
         institution = request.query_params.get("institution", "").strip()
         if institution:
@@ -93,6 +95,8 @@ def education_list_create(request):
 @permission_classes([IsPortfolioOwnerOrEditorOrReadOnly])
 def education_detail(request, education_id):
     """Retrieve, update, or delete one Education record."""
+    # Keep the related users available to calculated serializer fields without
+    # a separate query for the detail representation.
     education = get_object_or_404(
         Education.objects.prefetch_related("starred_by"),
         pk=education_id,
@@ -126,6 +130,8 @@ def education_detail(request, education_id):
 def education_star(request, education_id):
     """Toggle the authenticated user's star on an Education record."""
     with transaction.atomic():
+        # On databases with row-level locking, this serializes concurrent
+        # toggles so each request reads the preceding committed star state.
         education = get_object_or_404(
             Education.objects.select_for_update(),
             pk=education_id,
