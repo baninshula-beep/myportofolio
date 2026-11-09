@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import logout, login
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 import datetime
@@ -359,13 +360,24 @@ def delete_experience(
     )
 
 
+@ensure_csrf_cookie
 def show_education(request):
+    """Render Education UI with server-derived role flags and a CSRF cookie."""
     institution_query = request.GET.get("institution", "").strip()
+    is_authenticated = request.user.is_authenticated
+    is_owner = is_authenticated and request.user.is_superuser
+    is_editor = (
+        is_authenticated
+        and request.user.groups.filter(name="Editor").exists()
+    )
 
     context = {
         "name": "Banin Shula Afiqah Aradena",
         "institution_query": institution_query,
         "create_form": EducationForm(),
+        "can_star_education": is_authenticated,
+        "can_edit_education": is_owner or is_editor,
+        "is_portfolio_owner": is_owner,
     }
 
     return render(request,
